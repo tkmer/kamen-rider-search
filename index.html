@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仮面ライダー 検索ツール</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f13;--bg2:#1a1a22;--bg3:#22222e;--border:#2e2e3e;
+  --text:#e8e8f0;--text2:#9999b0;--text3:#5a5a70;
+  --accent:#c8102e;--accent2:#ff3355;
+  --showa:#7c5cfc;--showa-bg:#1e1830;
+  --heisei:#2e8fff;--heisei-bg:#0f1e30;
+  --reiwa:#22c97a;--reiwa-bg:#0a2218;
+  --hl:#ffd43b;--hl-text:#1a1400;
+  --radius:10px;--radius-sm:6px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN',sans-serif;min-height:100vh}
+
+/* HEADER */
+.site-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 20px;position:sticky;top:0;z-index:100}
+.header-inner{max-width:1200px;margin:0 auto}
+.site-title{font-size:20px;font-weight:700;color:var(--text);letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.site-title span{color:var(--accent2)}
+.search-wrap{display:flex;gap:8px}
+.search-box{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 14px 0 36px;height:40px;color:var(--text);font-size:14px;position:relative;transition:border-color .15s}
+.search-wrap .si{position:relative;flex:1;display:flex;align-items:center}
+.search-wrap .si i{position:absolute;left:10px;color:var(--text3);font-size:16px;pointer-events:none}
+.search-box:focus{outline:none;border-color:var(--accent2)}
+.search-box::placeholder{color:var(--text3)}
+.clear-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 14px;height:40px;color:var(--text2);cursor:pointer;font-size:13px;white-space:nowrap;transition:border-color .15s}
+.clear-btn:hover{border-color:var(--text2)}
+
+/* FILTER CHIPS */
+.filter-bar{max-width:1200px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.era-chip{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text2);font-size:12px;cursor:pointer;transition:all .15s}
+.era-chip.all.active{border-color:var(--text);color:var(--text);background:var(--bg3)}
+.era-chip.showa.active{border-color:var(--showa);color:var(--showa);background:var(--showa-bg)}
+.era-chip.heisei.active{border-color:var(--heisei);color:var(--heisei);background:var(--heisei-bg)}
+.era-chip.reiwa.active{border-color:var(--reiwa);color:var(--reiwa);background:var(--reiwa-bg)}
+.filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.stats-label{font-size:12px;color:var(--text3);margin-left:auto}
+
+/* FUZZY HINT */
+.fuzzy-hint{max-width:1200px;margin:0 auto;padding:0 20px 8px;font-size:12px;color:var(--text3);min-height:20px}
+.fuzzy-hint span{color:var(--heisei)}
+
+/* MAIN */
+main{max-width:1200px;margin:0 auto;padding:0 20px 40px;display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+
+/* GRID */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.rider-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;overflow:hidden}
+.rider-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
+.rider-card.active{border-color:var(--accent2);background:var(--bg3)}
+.card-thumb{height:110px;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;background:var(--bg3)}
+.era-dot{position:absolute;top:7px;right:7px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
+.era-dot.showa{background:var(--showa-bg);color:var(--showa);border:1px solid var(--showa)}
+.era-dot.heisei{background:var(--heisei-bg);color:var(--heisei);border:1px solid var(--heisei)}
+.era-dot.reiwa{background:var(--reiwa-bg);color:var(--reiwa);border:1px solid var(--reiwa)}
+.card-body{padding:9px 11px}
+.card-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:2px}
+.card-sub{font-size:11px;color:var(--text3)}
+
+/* DETAIL PANEL */
+.detail-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:sticky;top:80px}
+.detail-panel.empty{display:flex;align-items:center;justify-content:center;min-height:300px;color:var(--text3);font-size:13px;text-align:center}
+.detail-icon{font-size:80px;text-align:center;padding:16px 0;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:14px}
+.detail-name{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px}
+.detail-meta{font-size:12px;color:var(--text2);margin-bottom:12px}
+.tag-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+.tag{font-size:11px;padding:3px 9px;border-radius:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+.info-grid{display:grid;gap:8px}
+.info-item{background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px}
+.info-label{font-size:11px;color:var(--text3);margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.info-value{font-size:13px;color:var(--text)}
+
+/* EMPTY */
+.empty-msg{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-msg i{font-size:40px;display:block;margin-bottom:12px;color:var(--text3)}
+.empty-msg p{font-size:14px}
+
+/* HIGHLIGHT */
+mark{background:var(--hl);color:var(--hl-text);border-radius:2px;padding:0 2px}
+
+/* SCROLL */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="site-title"><i class="ti ti-shield-half-filled"></i>仮面ライダー<span>検索ツール</span></div>
+    <div class="search-wrap">
+      <div class="si">
+        <i class="ti ti-search"></i>
+        <input class="search-box" id="q" type="text" placeholder="例: バッタ、変身、昭和、翔一郎、黒い虫、怪人退治…" oninput="onSearch()">
+      </div>
+      <button class="clear-btn" onclick="clearSearch()"><i class="ti ti-x"></i> クリア</button>
+    </div>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <button class="era-chip all active" id="chip-all" onclick="setEra('all')">すべて</button>
+  <button class="era-chip showa" id="chip-昭和" onclick="setEra('昭和')">昭和</button>
+  <button class="era-chip heisei" id="chip-平成" onclick="setEra('平成')">平成</button>
+  <button class="era-chip reiwa" id="chip-令和" onclick="setEra('令和')">令和</button>
+  <div class="filter-sep"></div>
+  <span class="stats-label" id="stats"></span>
+</div>
+
+<div class="fuzzy-hint" id="hint"></div>
+
+<main>
+  <div>
+    <div class="card-grid" id="grid"></div>
+  </div>
+  <div class="detail-panel empty" id="panel">
+    <div><i class="ti ti-hand-click" style="font-size:32px;display:block;margin-bottom:8px;color:var(--text3)"></i>ライダーを選択してください</div>
+  </div>
+</main>
+
+<script>
+// ─── 類推用シノニム辞書 ───────────────────────────────────────
+const SYNONYMS = {
+  '虫':['バッタ','カブトムシ','トンボ','クモ','昆虫','蟲'],
+  '昆虫':['バッタ','カブトムシ','トンボ','クモ','虫'],
+  'バッタ':['grasshopper','昆虫','跳躍'],
+  'かぶと':['カブトムシ','兜','甲虫'],
+  '蜘蛛':['クモ','スパイダー'],
+  '黒い':['黒','ブラック','ダーク'],
+  '暗い':['黒','ダーク','ブラック'],
+  'ダーク':['黒','暗い','ブラック'],
+  '赤い':['赤','レッド'],
+  '青い':['青','ブルー'],
+  '白い':['白','ホワイト'],
+  '金色':['金','ゴールド'],
+  '銀色':['銀','シルバー'],
+  '怪人':['ショッカー','悪の組織','改造'],
+  '改造人間':['改造','ショッカー','サイボーグ'],
+  'サイボーグ':['改造人間','機械','ロボット'],
+  'ロボット':['機械','AI','人工知能','アンドロイド'],
+  'AI':['人工知能','ロボット','ヒューマギア','機械'],
+  '人工知能':['AI','ロボット','機械'],
+  '時間':['タイム','時計','過去','未来'],
+  '時計':['時間','タイム','ウォッチ'],
+  '電車':['列車','デンライナー','電王'],
+  '列車':['電車','デンライナー','鉄道'],
+  '電気':['雷','ストロンガー','電撃'],
+  '雷':['電気','稲妻','ストロンガー'],
+  '魔法':['ウィザード','魔術','魔法使い'],
+  '魔法使い':['魔法','ウィザード','魔術師'],
+  'ドラゴン':['龍','竜','dragon'],
+  '龍':['ドラゴン','竜'],
+  '車':['自動車','ドライブ','カー'],
+  '自動車':['車','ドライブ','カー'],
+  '宇宙':['スペース','フォーゼ','星','惑星'],
+  '星':['宇宙','スペース','天体'],
+  'お化け':['幽霊','ゴースト','ghost'],
+  '幽霊':['ゴースト','お化け','霊'],
+  'ゾンビ':['幽霊','アンデッド','ブレイド'],
+  'ゲーム':['game','エグゼイド','ビデオゲーム','RPG'],
+  '科学':['サイエンス','ビルド','実験'],
+  '忍者':['ニンジャ','ZX','忍び'],
+  '戦士':['ライダー','ヒーロー','戦う'],
+  '探偵':['W','ダブル','謎解き'],
+  '王様':['キング','ジオウ','帝王'],
+  '怪獣':['モンスター','怪物','ライダーシステム'],
+  '恐竜':['ティラノサウルス','レックス','竜','ドラゴン','龍','爬虫類','リバイス'],
+  'ティラノサウルス':['恐竜','レックス','竜','爬虫類'],
+  'レックス':['恐竜','ティラノサウルス','竜'],
+  '吸血鬼':['ヴァンパイア','キバ','牙'],
+  '忍':['忍者','ZX'],
+  'フルーツ':['果実','鎧武','ガイム','オレンジ'],
+  '果物':['フルーツ','鎧武','ガイム'],
+  '動物':['アニマル','OOO','オーズ'],
+  '楽器':['太鼓','響鬼','音楽'],
+  '音楽':['ミュージック','響鬼','太鼓'],
+  '自然':['アマゾン','大自然','ジャングル'],
+  'ジャングル':['アマゾン','熱帯','自然'],
+  'カード':['龍騎','ブレイド','トランプ'],
+  'トランプ':['カード','ブレイド','スペード'],
+  '本':['セイバー','書物','小説'],
+  '錬金術':['ガッチャード','ヴァルバラド','化学'],
+  '悪魔':['デビル','リバイス','バイス'],
+  '家族':['リバイス','兄弟','家'],
+  '進化':['アギト','進化論','発展'],
+  'タトバ':['トラ','タカ','バッタ','オーズ'],
+  '翼':['羽','飛行','スカイライダー','空'],
+  '空':['スカイ','飛行','翼','宇宙'],
+  '飛行':['空','翼','スカイライダー'],
+  '海':['水','海洋','X'],
+  '水':['海','液体','ウォーター'],
+  '太陽':['ソーラー','BLACK RX','光'],
+  '光':['太陽','ひかり','ルミナス'],
+  '剣':['ソード','刀','セイバー'],
+  '刀':['剣','ソード','刀剣'],
+  'バイク':['オートバイ','マシン','サイクロン号'],
+};
+
+// クエリを類推ワードに展開
+function expandQuery(q) {
+  const words = q.trim().split(/[\s　,、]+/).filter(Boolean);
+  const expanded = new Set(words);
+  words.forEach(w => {
+    const lower = w.toLowerCase();
+    Object.keys(SYNONYMS).forEach(key => {
+      if(key.toLowerCase().includes(lower) || lower.includes(key.toLowerCase())) {
+        SYNONYMS[key].forEach(s => expanded.add(s));
+      }
+    });
+  });
+  return Array.from(expanded).join(' ');
+}
+
+// ─── ライダーデータベース ──────────────────────────────────────
+const DB = [
+  // ── 昭和 ─────────────────────────────────
+  {
+    id:1, emoji:'🦗', name:'仮面ライダー1号', rider:'本郷猛', series:'仮面ライダー', era:'昭和', year:1971,
+    motif:'バッタ', colors:'赤・黒・白スカーフ',
+    catchphrase:'変身！',
+    song:'レッツゴー!!ライダーキック',
+    features:'緑の複眼、バッタモチーフ、赤いマフラー、サイクロン号',
+    tags:'バッタ 昆虫 虫 改造人間 ショッカー 赤 スカーフ 複眼 緑目 初代 オリジナル'
+  },
+  {
+    id:2, emoji:'🦗', name:'仮面ライダー2号', rider:'一文字隼人', series:'仮面ライダー', era:'昭和', year:1971,
+    motif:'バッタ', colors:'青・黒',
+    catchphrase:'変身！',
+    song:'レッツゴー!!ライダーキック',
+    features:'青い複眼、バッタモチーフ、青みがかったスーツ、サイクロン号新2号',
+    tags:'バッタ 昆虫 虫 改造人間 ショッカー 青 スカーフ 複眼 2号 セカンド'
+  },
+  {
+    id:3, emoji:'🦋', name:'仮面ライダーV3', rider:'風見志郎', series:'仮面ライダーV3', era:'昭和', year:1973,
+    motif:'トンボ・バッタ', colors:'緑・赤',
+    catchphrase:'変身！',
+    song:'戦え！仮面ライダーV3',
+    features:'胸に逆V字マーク、ダブルタイフーン変身ベルト、緑と赤のカラーリング',
+    tags:'トンボ バッタ 昆虫 虫 改造人間 デストロン 緑 赤 V字 ダブルタイフーン'
+  },
+  {
+    id:4, emoji:'🤖', name:'ライダーマン', rider:'村雨譲二', series:'仮面ライダーV3', era:'昭和', year:1973,
+    motif:'人間（改造サイボーグ）', colors:'黄・黒',
+    catchphrase:'',
+    song:'戦え！仮面ライダーV3',
+    features:'顔を覆わないマスク・素顔露出型、右腕がアタッチメントアーム、黄色スーツ',
+    tags:'マスクなし 素顔 サイボーグ 黄色 アーム デストロン 改造'
+  },
+  {
+    id:5, emoji:'🦈', name:'仮面ライダーX', rider:'神敬介', series:'仮面ライダーX', era:'昭和', year:1974,
+    motif:'改造人間（サイボーグ）', colors:'銀・赤',
+    catchphrase:'セタップ！',
+    song:'謎の仮面ライダーX',
+    features:'オーシャンマーク（胸）、銀色のスーツ、サイボーグ型改造人間、GOD機関',
+    tags:'改造人間 サイボーグ 機械 銀 シルバー 赤 GOD セタップ'
+  },
+  {
+    id:6, emoji:'🦅', name:'仮面ライダーアマゾン', rider:'山本大介', series:'仮面ライダーアマゾン', era:'昭和', year:1974,
+    motif:'アマゾン生物（トカゲ）', colors:'赤・緑・金',
+    catchphrase:'ア・マ・ゾ・ン！',
+    song:'アマゾンライダーここにあり',
+    features:'ワイルドなフォルム、ギギの腕輪、爪、アマゾンマーク、牙あり、野性的',
+    tags:'ジャングル アマゾン 自然 野性 トカゲ 爬虫類 腕輪 牙 緑 赤 ワイルド'
+  },
+  {
+    id:7, emoji:'⚡', name:'仮面ライダーストロンガー', rider:'城茂', series:'仮面ライダーストロンガー', era:'昭和', year:1975,
+    motif:'カブトムシ・電気', colors:'赤・黒',
+    catchphrase:'俺はストロンガー！電気人間！',
+    song:'仮面ライダーストロンガーのうた',
+    features:'カブトムシモチーフの兜、電気エネルギー、チャージアップ形態',
+    tags:'カブトムシ 電気 雷 電撃 昆虫 虫 甲虫 兜 黒 赤 チャージ'
+  },
+  {
+    id:8, emoji:'🌤️', name:'スカイライダー', rider:'筑波洋', series:'仮面ライダー（スカイライダー）', era:'昭和', year:1979,
+    motif:'バッタ・飛行', colors:'緑・銀',
+    catchphrase:'スカイライダー！',
+    song:'風よ光よ',
+    features:'飛行能力、ネオライダーベルト、緑の複眼、バッタモチーフ',
+    tags:'バッタ 昆虫 虫 飛行 空 翼 緑 銀 ネオライダーベルト'
+  },
+  {
+    id:9, emoji:'✊', name:'仮面ライダースーパー1', rider:'沖一也', series:'仮面ライダースーパー1', era:'昭和', year:1980,
+    motif:'宇宙・五指（グローブ）', colors:'白・赤',
+    catchphrase:'ファイブハンド！',
+    song:'スーパー1',
+    features:'五指型多機能グローブ（ファイブハンド）、白いスーツ、宇宙開発用改造人間',
+    tags:'宇宙 グローブ 手 五指 白 赤 スペース 開発 多機能'
+  },
+  {
+    id:10, emoji:'🥷', name:'仮面ライダーZX', rider:'村雨良', series:'仮面ライダーZX', era:'昭和', year:1984,
+    motif:'忍者', colors:'銀・赤',
+    catchphrase:'ZX！',
+    song:'仮面ライダーZX',
+    features:'忍者モチーフ、手裏剣、マフラーなし、シルバースーツ、バダン組織',
+    tags:'忍者 ニンジャ 手裏剣 銀 シルバー 赤 バダン マフラーなし'
+  },
+  {
+    id:11, emoji:'🌑', name:'仮面ライダーBLACK', rider:'南光太郎', series:'仮面ライダーBLACK', era:'昭和', year:1987,
+    motif:'バッタ（キングストーン）', colors:'黒・金',
+    catchphrase:'変身！',
+    song:'仮面ライダーBLACKのうた',
+    features:'全身黒いスーツ、胸のキングストーン（石）、バッタ眼、サターンリング、バトルホッパー',
+    tags:'バッタ 昆虫 虫 黒 ブラック 金 キングストーン クライシス 暗い ダーク 石'
+  },
+  {
+    id:12, emoji:'☀️', name:'仮面ライダーBLACK RX', rider:'南光太郎', series:'仮面ライダーBLACK RX', era:'昭和', year:1988,
+    motif:'太陽・バッタ', colors:'黒・金・赤',
+    catchphrase:'変身！',
+    song:'仮面ライダーBLACK RX',
+    features:'BLACK进化形態、太陽エネルギー、リボルケイン（武器）、黒と金のスーツ',
+    tags:'バッタ 昆虫 太陽 光 黒 ブラック 金 赤 RX リボルケイン クライシス'
+  },
+  // ── 平成1期 ──────────────────────────────
+  {
+    id:13, emoji:'🔮', name:'仮面ライダークウガ', rider:'五代雄介', series:'仮面ライダークウガ', era:'平成', year:2000,
+    motif:'古代の戦士', colors:'白・赤・黒・青（フォーム別）',
+    catchphrase:'変身！',
+    song:'仮面ライダークウガ!',
+    features:'アークルベルト装着変身、グローイング→マイティ→ドラゴン→ペガサス→アルティメットの多フォーム、古代文字マーク、グロンギと戦う',
+    tags:'古代 戦士 アークル 白 赤 黒 青 多フォーム 遺跡 グロンギ'
+  },
+  {
+    id:14, emoji:'🌊', name:'仮面ライダーアギト', rider:'津上翔一', series:'仮面ライダーアギト', era:'平成', year:2001,
+    motif:'西洋の竜（ドラゴン）・進化', colors:'金・銀・赤',
+    catchphrase:'変身！',
+    song:'ANOTHER AGITO',
+    features:'額のアギトマーク、グラウンド・ストーム・フレイムの三フォーム、金色が主体',
+    tags:'ドラゴン 龍 竜 西洋 進化 金 ゴールド 銀 赤 トライホーン アンノウン'
+  },
+  {
+    id:15, emoji:'🛡️', name:'仮面ライダーG3', rider:'氷川誠', series:'仮面ライダーアギト', era:'平成', year:2001,
+    motif:'警察・アーマー', colors:'黒・銀',
+    catchphrase:'変身！',
+    song:'ANOTHER AGITO',
+    features:'警察開発のアーマードスーツ、無機質なロボット的デザイン、G3-Xに強化',
+    tags:'警察 アーマー 黒 銀 機械 ロボット 無機質 G3X'
+  },
+  {
+    id:16, emoji:'🐉', name:'仮面ライダー龍騎', rider:'城戸真司', series:'仮面ライダー龍騎', era:'平成', year:2002,
+    motif:'ドラゴン・カード', colors:'赤・黒',
+    catchphrase:'変身！',
+    song:'Alive A life',
+    features:'契約モンスター・ドラグレッダー、ミラーワールド、カードデッキシステム',
+    tags:'ドラゴン 龍 竜 カード デッキ 鏡 ミラーワールド 赤 黒 戦う'
+  },
+  {
+    id:17, emoji:'🦇', name:'仮面ライダーナイト', rider:'秋山蓮', series:'仮面ライダー龍騎', era:'平成', year:2002,
+    motif:'コウモリ・カード', colors:'黒・紫',
+    catchphrase:'変身！',
+    song:'Alive A life',
+    features:'コウモリ翼モチーフ、闇の契約モンスター、黒紫のカラーリング、ウィングランサー',
+    tags:'コウモリ 翼 蝙蝠 黒 紫 ダーク 暗い カード ミラーワールド'
+  },
+  {
+    id:18, emoji:'🌀', name:'仮面ライダーファイズ', rider:'乾巧', series:'仮面ライダー555', era:'平成', year:2003,
+    motif:'ギリシャ文字φ（ファイ）', colors:'銀・黒',
+    catchphrase:'変身！',
+    song:"Justiφ's",
+    features:'φマーク、ファイズギア（スマホ型）、フォトンブラッド（光の刃）、クリムゾンスマッシュ',
+    tags:'ギリシャ文字 φ ファイ 銀 黒 スマホ 光 オルフェノク スマートブレイン'
+  },
+  {
+    id:19, emoji:'🌙', name:'仮面ライダーカイザ', rider:'草加雅人', series:'仮面ライダー555', era:'平成', year:2003,
+    motif:'ギリシャ文字χ（カイ）', colors:'青・黒',
+    catchphrase:'変身！',
+    song:"Justiφ's",
+    features:'χマーク、ブルーのカラーリング、冷酷なキャラクター、カイザギア',
+    tags:'ギリシャ文字 χ 青 ブルー 黒 ライバル オルフェノク スマートブレイン'
+  },
+  {
+    id:20, emoji:'♠️', name:'仮面ライダーブレイド', rider:'剣崎一真', series:'仮面ライダーブレイド', era:'平成', year:2004,
+    motif:'カブトムシ・トランプスペード', colors:'青・白',
+    catchphrase:'変身！',
+    song:'Blade Brave',
+    features:'スペードマーク、ラウズカードシステム、カブトムシ眼、ブルースーツ',
+    tags:'カブトムシ 甲虫 昆虫 虫 トランプ スペード カード 青 ブルー 白 ブレイド'
+  },
+  {
+    id:21, emoji:'♦️', name:'仮面ライダーギャレン', rider:'橘朔也', series:'仮面ライダーブレイド', era:'平成', year:2004,
+    motif:'クワガタムシ・トランプダイヤ', colors:'金・白',
+    catchphrase:'変身！',
+    song:'Blade Brave',
+    features:'ダイヤマーク、クワガタムシモチーフ、ゴールドカラー、ラウズカード',
+    tags:'クワガタ 昆虫 虫 甲虫 トランプ ダイヤ カード 金 ゴールド 白'
+  },
+  {
+    id:22, emoji:'🥁', name:'仮面ライダー響鬼', rider:'斉木哲朗（ひびき）', series:'仮面ライダー響鬼', era:'平成', year:2005,
+    motif:'和風の鬼・打楽器', colors:'赤・黒',
+    catchphrase:'変鬼！',
+    song:'少年よ',
+    features:'和風デザイン、鬼の角、マスクなし素顔変身、太鼓・音撃棒で戦う',
+    tags:'鬼 和風 太鼓 音楽 楽器 赤 黒 マスクなし 素顔 和 日本 音撃'
+  },
+  {
+    id:23, emoji:'🐛', name:'仮面ライダーカブト', rider:'天道総司', series:'仮面ライダーカブト', era:'平成', year:2006,
+    motif:'カブトムシ', colors:'赤・金',
+    catchphrase:'天の道を往き、総てを司る。それが仮面ライダーカブトだ！',
+    song:'NEXT LEVEL',
+    features:'キャストオフ（外装分離）→ライダーフォーム、クロックアップ（超高速移動）、角',
+    tags:'カブトムシ 甲虫 昆虫 虫 角 赤 金 ゴールド クロックアップ 高速 ワーム'
+  },
+  {
+    id:24, emoji:'🦅', name:'仮面ライダーザビー', rider:'加賀美新', series:'仮面ライダーカブト', era:'平成', year:2006,
+    motif:'スズメバチ', colors:'黄・黒',
+    catchphrase:'変身！',
+    song:'NEXT LEVEL',
+    features:'スズメバチモチーフ、黄黒ストライプ、ハチの羽',
+    tags:'スズメバチ ハチ 蜂 昆虫 虫 黄色 黒 ストライプ 羽'
+  },
+  {
+    id:25, emoji:'⏳', name:'仮面ライダー電王', rider:'野上良太郎', series:'仮面ライダー電王', era:'平成', year:2007,
+    motif:'列車・時間旅行', colors:'赤・金・黒',
+    catchphrase:'時刻を超えて、俺、参上！！',
+    song:'Climax Jump',
+    features:'イマジン（モモタロス等）が憑依、デンライナー（タイムトレイン）、複数人格変身',
+    tags:'列車 電車 時間 過去 未来 タイムトラベル 赤 金 黒 モモタロス イマジン 桃太郎'
+  },
+  {
+    id:26, emoji:'🌟', name:'仮面ライダーゼロノス', rider:'桜井侑斗', series:'仮面ライダー電王', era:'平成', year:2007,
+    motif:'時間・電車・牛（ウシ）', colors:'黒・金',
+    catchphrase:'私は消えない！',
+    song:'Climax Jump',
+    features:'黒金カラー、ガオウ（タイムトレイン）、牛モチーフ、記憶が消えていく設定',
+    tags:'時間 電車 列車 牛 ウシ 黒 金 ゴールド 記憶 ゼロノス デンライナー'
+  },
+  {
+    id:27, emoji:'🦷', name:'仮面ライダーキバ', rider:'紅渡', series:'仮面ライダーキバ', era:'平成', year:2008,
+    motif:'吸血鬼・城', colors:'赤・黒・白',
+    catchphrase:'変身！',
+    song:'Break the Chain',
+    features:'キバットバット3世が噛む変身、城モチーフの装甲、牙、足のチェーン、ガーゴイル型武器',
+    tags:'吸血鬼 ヴァンパイア 城 コウモリ 牙 チェーン 赤 黒 白 ファンガイア'
+  },
+  {
+    id:28, emoji:'🔫', name:'仮面ライダーイクサ', rider:'名護啓介', series:'仮面ライダーキバ', era:'平成', year:2008,
+    motif:'ファンガイア狩り・金', colors:'金・白',
+    catchphrase:'俺は絶対許さない！',
+    song:'Break the Chain',
+    features:'ゴールドアーマー、ガンシューター型ライダー、強情なキャラクター',
+    tags:'金 ゴールド 白 銃 ガン ファンガイア 射撃 白鎧'
+  },
+  {
+    id:29, emoji:'🃏', name:'仮面ライダーディケイド', rider:'門矢士', series:'仮面ライダーディケイド', era:'平成', year:2009,
+    motif:'歴代ライダー全員', colors:'マゼンタ・白・黒',
+    catchphrase:'壊して通るだけだ',
+    song:'Ride the Wind',
+    features:'歴代ライダーにフォームチェンジ、カードシステム、マゼンタ×白のストライプ、破壊の旅人',
+    tags:'マゼンタ ピンク 白 黒 カード 全員 歴代 ストライプ 変身 破壊 旅人'
+  },
+  // ── 平成2期 ──────────────────────────────
+  {
+    id:30, emoji:'🔍', name:'仮面ライダーW', rider:'左翔太郎 & フィリップ', series:'仮面ライダーW', era:'平成', year:2009,
+    motif:'探偵・ガイアメモリ', colors:'黒・緑（サイクロンジョーカー）',
+    catchphrase:'さあ、お前の罪を数えろ！',
+    song:'W-B-X ~W-Boiled Extreme~',
+    features:'二人で一人のライダー、左右非対称デザイン、ガイアメモリ差込変身、風都探偵事務所',
+    tags:'探偵 二人 半身 左右 黒 緑 白 赤 青 ガイアメモリ 風都 ドーパント'
+  },
+  {
+    id:31, emoji:'🏍️', name:'仮面ライダーアクセル', rider:'照井竜', series:'仮面ライダーW', era:'平成', year:2010,
+    motif:'バイク・炎', colors:'赤・黒・銀',
+    catchphrase:'（照井流）変身！',
+    song:'W-B-X',
+    features:'自分自体がバイクに変形するトライアル型、赤い炎モチーフ',
+    tags:'バイク 炎 火 赤 黒 銀 変形 オートバイ 車体'
+  },
+  {
+    id:32, emoji:'🦁', name:'仮面ライダーオーズ', rider:'火野映司', series:'仮面ライダーOOO', era:'平成', year:2010,
+    motif:'動物（コアメダル3枚組み合わせ）', colors:'赤・黄・緑（タトバ）',
+    catchphrase:'変身！',
+    song:'Anything Goes!',
+    features:'コアメダル3枚コンボ変身（タトバ＝タカ・トラ・バッタ）、グリード怪人',
+    tags:'動物 タカ 鷹 トラ 虎 バッタ 昆虫 赤 黄 緑 OOO メダル タトバ コンボ'
+  },
+  {
+    id:33, emoji:'🩺', name:'仮面ライダーバース', rider:'後藤慎太郎', series:'仮面ライダーOOO', era:'平成', year:2010,
+    motif:'メダル', colors:'白・黒・金',
+    catchphrase:'変身！',
+    song:'Anything Goes!',
+    features:'機械的アーマー、セルメダル多数使用、白い鎧デザイン',
+    tags:'機械 白 黒 金 アーマー メダル OOO'
+  },
+  {
+    id:34, emoji:'🚀', name:'仮面ライダーフォーゼ', rider:'如月弦太朗', series:'仮面ライダーフォーゼ', era:'平成', year:2011,
+    motif:'宇宙・高校生', colors:'白・黒',
+    catchphrase:'宇宙キター！！！',
+    song:'Switch On!',
+    features:'白い宇宙服風デザイン、スイッチシステム（40スイッチ）、ロケットモジュール右腕',
+    tags:'宇宙 スペース 星 ロケット 高校生 白 黒 スイッチ ゾディアーツ'
+  },
+  {
+    id:35, emoji:'☄️', name:'仮面ライダーメテオ', rider:'朔田流星', series:'仮面ライダーフォーゼ', era:'平成', year:2011,
+    motif:'流星・宇宙', colors:'青・黒・銀',
+    catchphrase:'お前のさだめは俺が決める',
+    song:'Switch On!',
+    features:'青いスターダストスーツ、流星モチーフ、格闘戦特化',
+    tags:'流星 宇宙 星 青 ブルー 黒 銀 格闘 拳 星座'
+  },
+  {
+    id:36, emoji:'💍', name:'仮面ライダーウィザード', rider:'操真晴人', series:'仮面ライダーウィザード', era:'平成', year:2012,
+    motif:'魔法使い・ドラゴン', colors:'白・赤・金',
+    catchphrase:'さあ、ショータイムだ',
+    song:'Life is SHOW TIME',
+    features:'ウィザードリング（指輪）変身、フレイムドラゴン等4属性、マントなし白スーツ',
+    tags:'魔法 魔法使い ウィザード ドラゴン 龍 指輪 リング 白 赤 金 炎 水 風 土'
+  },
+  {
+    id:37, emoji:'🦁', name:'仮面ライダービースト', rider:'仁藤攻介', series:'仮面ライダーウィザード', era:'平成', year:2013,
+    motif:'ライオン・動物', colors:'金・青・白',
+    catchphrase:'昼飯前だ！',
+    song:'Life is SHOW TIME',
+    features:'ライオンモチーフのヘルメット、動物召喚マント変身、食い意地キャラ',
+    tags:'ライオン 動物 獣 金 青 白 マント 食べ物 空腹 ファントム'
+  },
+  {
+    id:38, emoji:'🍊', name:'仮面ライダー鎧武', rider:'葛葉紘汰', series:'仮面ライダー鎧武/ガイム', era:'平成', year:2013,
+    motif:'戦国武将・オレンジ', colors:'橙・金・赤',
+    catchphrase:'変身！',
+    song:'Ranbu Escalation',
+    features:'戦国アーマー＋フルーツモチーフ、ロックシード変身、橙色の鎧、オレンジアームズ',
+    tags:'戦国 武将 鎧 オレンジ フルーツ 果物 橙 金 赤 ロックシード ヘルヘイム'
+  },
+  {
+    id:39, emoji:'🍌', name:'仮面ライダー斬月', rider:'呉島貴虎', series:'仮面ライダー鎧武/ガイム', era:'平成', year:2013,
+    motif:'戦国・メロン', colors:'銀・緑・白',
+    catchphrase:'見苦しい',
+    song:'Ranbu Escalation',
+    features:'メロンアームズ、刀身を持つ斬撃型、銀白の鎧',
+    tags:'戦国 メロン フルーツ 果物 銀 緑 白 鎧 刀 斬る'
+  },
+  {
+    id:40, emoji:'🍋', name:'仮面ライダーバロン', rider:'呉島光実', series:'仮面ライダー鎧武/ガイム', era:'平成', year:2013,
+    motif:'戦国・バナナ', colors:'金・黒',
+    catchphrase:'変身！',
+    song:'Ranbu Escalation',
+    features:'バナナアームズ、長槍型武器、金黒カラーの鎧',
+    tags:'戦国 バナナ フルーツ 果物 金 黒 槍 鎧'
+  },
+  {
+    id:41, emoji:'🚗', name:'仮面ライダードライブ', rider:'泊進ノ介', series:'仮面ライダードライブ', era:'平成', year:2014,
+    motif:'自動車・タイヤ', colors:'赤・白・黒',
+    catchphrase:'変身！',
+    song:'SURPRISE-DRIVE',
+    features:'タイヤモチーフのショルダーアーマー、ベルトがしゃべるベルトさん、シフトカー変身',
+    tags:'車 自動車 タイヤ 赤 白 黒 ドライブ ベルトさん 警察 ロイミュード'
+  },
+  {
+    id:42, emoji:'🏎️', name:'仮面ライダーマッハ', rider:'詩島剛', series:'仮面ライダードライブ', era:'平成', year:2014,
+    motif:'自動車・スピード', colors:'青・白・銀',
+    catchphrase:'シフトアップ！',
+    song:'SURPRISE-DRIVE',
+    features:'スポーツカーモチーフ、青白スーツ、スピード特化',
+    tags:'車 自動車 スポーツ 青 白 銀 高速 マッハ'
+  },
+  {
+    id:43, emoji:'👻', name:'仮面ライダーゴースト', rider:'天空寺タケル', series:'仮面ライダーゴースト', era:'平成', year:2015,
+    motif:'幽霊・英雄魂', colors:'白・橙・黒',
+    catchphrase:'俺、参上！',
+    song:'Galaxy Next Door',
+    features:'眼魂で偉人（ムサシ魂等）に変身、幽霊モチーフ、ゴーストドライバー、一度死んでいる',
+    tags:'幽霊 ゴースト お化け 死 偉人 魂 白 橙 オレンジ 黒 眼魂'
+  },
+  {
+    id:44, emoji:'🕷️', name:'仮面ライダースペクター', rider:'深海マコト', series:'仮面ライダーゴースト', era:'平成', year:2015,
+    motif:'眼・偉人の力（英雄魂）', colors:'紫・黒・白',
+    catchphrase:'変身！俺、参上！',
+    song:'Galaxy Next Door',
+    features:'眼魂で偉人の力を使う、紫黒の配色、ゴーストと同じシステム',
+    tags:'眼 目 偉人 英雄魂 眼魂 幽霊 ゴースト 紫 黒 白 スペクター'
+  },
+  {
+    id:45, emoji:'🎮', name:'仮面ライダーエグゼイド', rider:'宝生永夢', series:'仮面ライダーエグゼイド', era:'平成', year:2016,
+    motif:'ゲーム・医療', colors:'ピンク・黄・白',
+    catchphrase:'レベルアップ！',
+    song:'EXCITE',
+    features:'ゲームキャラ風の丸いシルエット（アクションゲーマー）、ガシャットで変身、医師設定',
+    tags:'ゲーム RPG アクション ピンク 黄 白 医師 医者 バグスター ウィルス ゲーマー'
+  },
+  {
+    id:46, emoji:'⚔️', name:'仮面ライダーブレイブ', rider:'鏡飛彩', series:'仮面ライダーエグゼイド', era:'平成', year:2016,
+    motif:'ゲーム・剣士', colors:'青・白・黒',
+    catchphrase:'変身！',
+    song:'EXCITE',
+    features:'青いゲームキャラデザイン、剣士型ゲームモチーフ',
+    tags:'ゲーム 剣 ソード 青 ブルー 白 黒 ファンタジー RPG 医師'
+  },
+  {
+    id:47, emoji:'🧪', name:'仮面ライダービルド', rider:'桐生戦兎', series:'仮面ライダービルド', era:'平成', year:2017,
+    motif:'科学・フルボトル', colors:'赤・青（ハーフ&ハーフ）',
+    catchphrase:'さぁ、実験を始めようか。',
+    song:'Be The One',
+    features:'ラビット×タンクが基本（赤＋青の左右分割）、フルボトル2種組み合わせ変身、科学者',
+    tags:'科学 実験 ボトル 左右 半分 赤 青 白 ウサギ タンク 戦争 スマッシュ'
+  },
+  {
+    id:48, emoji:'🐻', name:'仮面ライダークローズ', rider:'万丈龍我', series:'仮面ライダービルド', era:'平成', year:2017,
+    motif:'ドラゴン（龍）', colors:'赤・黒・金',
+    catchphrase:'変身！',
+    song:'Be The One',
+    features:'ドラゴンモチーフ、赤黒金の配色、フルボトル使用',
+    tags:'ドラゴン 龍 竜 恐竜 赤 黒 金 強い ビルド'
+  },
+  {
+    id:49, emoji:'⌚', name:'仮面ライダージオウ', rider:'常磐ソウゴ', series:'仮面ライダージオウ', era:'平成', year:2018,
+    motif:'時間・王', colors:'黒・金・白',
+    catchphrase:'時間だ！変身！',
+    song:'FUTURE',
+    features:'ライドウォッチで歴代ライダー能力使用、魔王の素質、ジクウドライバー、額の「仮面ライダー」文字',
+    tags:'時間 時計 王 魔王 黒 金 白 歴代 ウォッチ 未来 過去'
+  },
+  {
+    id:50, emoji:'🗡️', name:'仮面ライダーゲイツ', rider:'明光院ゲイツ', series:'仮面ライダージオウ', era:'平成', year:2018,
+    motif:'時間・武将', colors:'黒・赤・金',
+    catchphrase:'変身！',
+    song:'FUTURE',
+    features:'武将モチーフ、黒赤の鎧風デザイン',
+    tags:'武将 鎧 黒 赤 金 時間 ウォッチ ジオウ'
+  },
+  // ── 令和 ──────────────────────────────────
+  {
+    id:51, emoji:'🤖', name:'仮面ライダーゼロワン', rider:'飛電或人', series:'仮面ライダーゼロワン', era:'令和', year:2019,
+    motif:'AIバッタ・昆虫', colors:'黄・黒・銀',
+    catchphrase:'世界最強の社長はただひとり！オレだ！',
+    song:'REAL×EYEZ',
+    features:'バッタ眼（黄緑に光る）、AI進化モチーフ、プログライズキー、衛星ゼア、ヒューマギア',
+    tags:'バッタ 昆虫 虫 AI 人工知能 ロボット ヒューマギア 黄 黒 銀 変身 未来'
+  },
+  {
+    id:52, emoji:'🔫', name:'仮面ライダーバルカン', rider:'不破諫', series:'仮面ライダーゼロワン', era:'令和', year:2019,
+    motif:'AIウルフ・射撃', colors:'グレー・黒・赤',
+    catchphrase:'変身！',
+    song:'REAL×EYEZ',
+    features:'ウルフモチーフ、ガンシューター型、灰黒の配色',
+    tags:'オオカミ 狼 ウルフ 銃 ガン グレー 黒 赤 射撃 AI ヒューマギア'
+  },
+  {
+    id:53, emoji:'📚', name:'仮面ライダーセイバー', rider:'神山飛羽真', series:'仮面ライダーセイバー', era:'令和', year:2020,
+    motif:'剣・本', colors:'赤・白・金',
+    catchphrase:'変身！',
+    song:'ALMIGHTY',
+    features:'ワンダーライドブック変身（本型ガジェット）、ドラゴンモチーフ、ソードオブロゴス騎士',
+    tags:'剣 刀 ソード 本 書物 ドラゴン 龍 赤 白 金 騎士 ロゴス'
+  },
+  {
+    id:54, emoji:'🔥', name:'仮面ライダーブレイズ', rider:'新堂倫太郎', series:'仮面ライダーセイバー', era:'令和', year:2020,
+    motif:'剣・ライオン', colors:'青・金・白',
+    catchphrase:'変身！',
+    song:'ALMIGHTY',
+    features:'ライオン炎モチーフ、青い炎、ライオンセンキいちゃんなどブック使用',
+    tags:'ライオン 動物 炎 火 青 金 白 剣 ソードオブロゴス'
+  },
+  {
+    id:55, emoji:'🦎', name:'仮面ライダーリバイス', rider:'五十嵐一輝', series:'仮面ライダーリバイス', era:'令和', year:2021,
+    motif:'悪魔・ティラノサウルス（レックスゲノム）・家族', colors:'青・赤（リバイ）',
+    catchphrase:'変身！',
+    song:'ORETACHI NO PARTY',
+    features:'バイスタンプ変身、ベースフォームはレックスゲノム（ティラノサウルス恐竜モチーフ）、体内の悪魔バイスと二人同時変身、家族テーマ',
+    tags:'悪魔 デビル バイス 家族 兄弟 青 赤 二人 スタンプ はんこ デッドマンズ 恐竜 ティラノサウルス レックス 竜 爬虫類'
+  },
+  {
+    id:56, emoji:'🦅', name:'仮面ライダーライブ', rider:'五十嵐大二', series:'仮面ライダーリバイス', era:'令和', year:2021,
+    motif:'コウモリ・弟', colors:'黒・紫・赤',
+    catchphrase:'変身！',
+    song:'ORETACHI NO PARTY',
+    features:'コウモリモチーフ、黒紫の配色、兄（一輝）の弟',
+    tags:'コウモリ 翼 蝙蝠 黒 紫 赤 家族 兄弟 スタンプ'
+  },
+  {
+    id:57, emoji:'🏆', name:'仮面ライダーギーツ', rider:'浮世英寿', series:'仮面ライダーギーツ', era:'令和', year:2022,
+    motif:'キツネ・デザイアグランプリ', colors:'白・金・黒',
+    catchphrase:'さあ、ここからがハイライトだ！',
+    song:'DESIRE GRAND PRIX',
+    features:'キツネモチーフ（マスク）、デザイアグランプリ参加者、レイズバックルで強化',
+    tags:'キツネ 狐 白 金 黒 デザグラ バックル ゲーム的 変身 ジャマト'
+  },
+  {
+    id:58, emoji:'🦗', name:'仮面ライダータイクーン', rider:'桜井景和', series:'仮面ライダーギーツ', era:'令和', year:2022,
+    motif:'バッタ', colors:'緑・黒',
+    catchphrase:'変身！',
+    song:'DESIRE GRAND PRIX',
+    features:'バッタモチーフ、緑黒配色、格闘型、デザイアグランプリ参加',
+    tags:'バッタ 昆虫 虫 緑 黒 格闘 デザグラ ジャマト'
+  },
+  {
+    id:62, emoji:'🐗', name:'仮面ライダーバッファ', rider:'吾妻道長', series:'仮面ライダーギーツ', era:'令和', year:2022,
+    motif:'バッファロー', colors:'紫・黒',
+    catchphrase:'変身！',
+    song:'DESIRE GRAND PRIX',
+    features:'バッファローモチーフ、紫黒配色、強気なライバルキャラ、デザイアグランプリ参加',
+    tags:'バッファロー 牛 野牛 紫 黒 ライバル デザグラ ジャマト 格闘'
+  },
+  {
+    id:59, emoji:'⚗️', name:'仮面ライダーガッチャード', rider:'一ノ瀬宝太郎', series:'仮面ライダーガッチャード', era:'令和', year:2023,
+    motif:'錬金術・化学', colors:'赤・白・金',
+    catchphrase:'掴め！最高のガッチャ！',
+    song:'GATCHARD',
+    features:'ケミー（錬金生物）とガッチャ合体変身、ガッチャードライバー、元素・化学モチーフ',
+    tags:'錬金術 化学 元素 ケミー 赤 白 金 ガッチャ 合体'
+  },
+  {
+    id:60, emoji:'⚔️', name:'仮面ライダーヴァルバラド', rider:'黒鋼スパナ', series:'仮面ライダーガッチャード', era:'令和', year:2023,
+    motif:'錬金術（闇）・スパナ', colors:'黒・金・紫',
+    catchphrase:'変身！',
+    song:'VALVARAD',
+    features:'黒と金の鎧、スパナモチーフ、ライバルキャラ、ヴァルバラドドライバー',
+    tags:'錬金術 化学 黒 金 紫 ダーク 暗い スパナ 工具 ライバル'
+  },
+  {
+    id:63, emoji:'🍬', name:'仮面ライダーガヴ', rider:'ショウマ', series:'仮面ライダーガヴ', era:'令和', year:2024,
+    motif:'お菓子・眷属（ゴチゾウ）', colors:'赤・黒・白',
+    catchphrase:'二度と闇菓子に関わらないか、この場で俺に倒されるか？',
+    song:'Got Boost？',
+    features:'お菓子を食べてゴチゾウ（眷属）を生み出し腹部のガヴにセット変身、グラニュートの血を引く青年',
+    tags:'お菓子 菓子 スイーツ 甘い ゴチゾウ 赤 黒 白 グラニュート 眷属'
+  },
+  {
+    id:64, emoji:'🦅', name:'仮面ライダーバルキリー', rider:'刃唯阿', series:'仮面ライダーゼロワン', era:'令和', year:2019,
+    motif:'AIハヤブサ・射撃', colors:'黄・黒・白',
+    catchphrase:'変身！',
+    song:'REAL×EYEZ',
+    features:'ハヤブサモチーフ、ゼロワン世界の女性ライダー、ライジングホッパー系プログライズキー',
+    tags:'ハヤブサ 鷹 隼 鳥 黄 黒 白 女性 AI ヒューマギア ゼロワン'
+  },
+];
+
+// ─── Fuse.js 設定 ─────────────────────────────────────────────
+const FUSE_OPTS = {
+  keys:[
+    {name:'name', weight:0.3},
+    {name:'rider', weight:0.2},
+    {name:'catchphrase', weight:0.2},
+    {name:'song', weight:0.15},
+    {name:'features', weight:0.2},
+    {name:'motif', weight:0.2},
+    {name:'colors', weight:0.15},
+    {name:'tags', weight:0.25},
+    {name:'series', weight:0.1},
+  ],
+  threshold: 0.45,
+  includeScore: true,
+  minMatchCharLength: 1,
+  ignoreLocation: true,
+};
+let fuse = new Fuse(DB, FUSE_OPTS);
+
+// ─── State ──────────────────────────────────────────────────
+let activeEra = 'all';
+let selectedId = null;
+let expandedTerms = [];
+
+function eraClass(e){ return {昭和:'showa',平成:'heisei',令和:'reiwa'}[e]||'showa'; }
+
+function hl(text, q){
+  if(!q || !text) return text || '';
+  const terms = q.split(/\s+/).filter(Boolean);
+  let out = text;
+  terms.forEach(t => {
+    if(!t) return;
+    const re = new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi');
+    out = out.replace(re, m => `<mark>${m}</mark>`);
+  });
+  return out;
+}
+
+function onSearch(){
+  selectedId = null;
+  renderPanel();
+  renderGrid();
+}
+
+function clearSearch(){
+  document.getElementById('q').value = '';
+  onSearch();
+}
+
+function setEra(e){
+  activeEra = e;
+  document.querySelectorAll('.era-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('chip-' + (e==='all'?'all':e)).classList.add('active');
+  renderGrid();
+}
+
+function getResults(){
+  const raw = document.getElementById('q').value.trim();
+  let results;
+
+  if(!raw){
+    expandedTerms = [];
+    results = DB.map(r => ({item:r, score:1}));
+  } else {
+    const expanded = expandQuery(raw);
+    expandedTerms = expanded.split(' ').filter(t => !raw.split(/\s+/).includes(t));
+    results = fuse.search(expanded);
+    if(!results.length && raw !== expanded) {
+      results = fuse.search(raw);
+    }
+  }
+
+  if(activeEra !== 'all'){
+    results = results.filter(r => r.item.era === activeEra);
+  }
+  return results;
+}
+
+function renderHint(){
+  const hint = document.getElementById('hint');
+  const raw = document.getElementById('q').value.trim();
+  if(raw && expandedTerms.length){
+    hint.innerHTML = `<i class="ti ti-bulb" style="color:var(--heisei)"></i> 類推キーワード追加: <span>${expandedTerms.slice(0,8).join('、')}</span>`;
+  } else {
+    hint.innerHTML = '';
+  }
+}
+
+function renderGrid(){
+  const results = getResults();
+  renderHint();
+  const raw = document.getElementById('q').value.trim();
+  const expanded = raw ? expandQuery(raw) : '';
+  document.getElementById('stats').textContent = `${results.length} 件 / 全 ${DB.length} 件`;
+
+  const grid = document.getElementById('grid');
+  if(!results.length){
+    grid.innerHTML = `<div class="empty-msg"><i class="ti ti-mood-sad"></i><p>該当する仮面ライダーが見つかりません</p></div>`;
+    return;
+  }
+  grid.innerHTML = results.map(({item:r}) => `
+    <div class="rider-card${selectedId===r.id?' active':''}" onclick="selectRider(${r.id})">
+      <div class="card-thumb">
+        <span>${r.emoji}</span>
+        <span class="era-dot ${eraClass(r.era)}">${r.era}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-name">${hl(r.name, expanded)}</div>
+        <div class="card-sub">${r.year}年</div>
+      </div>
+    </div>`).join('');
+}
+
+function selectRider(id){
+  selectedId = id;
+  renderGrid();
+  renderPanel();
+}
+
+function renderPanel(){
+  const panel = document.getElementById('panel');
+  const raw = document.getElementById('q').value.trim();
+  const expanded = raw ? expandQuery(raw) : '';
+
+  if(!selectedId){
+    panel.className = 'detail-panel empty';
+    panel.innerHTML = '<div><i class="ti ti-hand-click" style="font-size:32px;display:block;margin-bottom:8px;color:var(--text3)"></i>ライダーを選択してください</div>';
+    return;
+  }
+  const r = DB.find(x => x.id === selectedId);
+  if(!r){ return; }
+  panel.className = 'detail-panel';
+  panel.innerHTML = `
+    <div class="detail-icon">${r.emoji}</div>
+    <div class="detail-name">${hl(r.name, expanded)}</div>
+    <div class="detail-meta">${r.series}（${r.year}年）</div>
+    <div class="tag-row">
+      <span class="era-dot ${eraClass(r.era)}" style="position:static">${r.era}</span>
+      <span class="tag">${r.motif}</span>
+      <span class="tag">${r.colors}</span>
+    </div>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label"><i class="ti ti-user"></i> 変身者</div>
+        <div class="info-value">${hl(r.rider, expanded)}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label"><i class="ti ti-palette"></i> カラー</div>
+        <div class="info-value">${hl(r.colors, expanded)}</div>
+      </div>
+      <div class="info-item" style="grid-column:1/-1">
+        <div class="info-label"><i class="ti ti-message-circle"></i> 決め台詞</div>
+        <div class="info-value">${hl(r.catchphrase||'—', expanded)}</div>
+      </div>
+      <div class="info-item" style="grid-column:1/-1">
+        <div class="info-label"><i class="ti ti-music"></i> 主題歌</div>
+        <div class="info-value">${hl(r.song, expanded)}</div>
+      </div>
+      <div class="info-item" style="grid-column:1/-1">
+        <div class="info-label"><i class="ti ti-eye"></i> 外見・特徴</div>
+        <div class="info-value">${hl(r.features, expanded)}</div>
+      </div>
+    </div>`;
+}
+
+renderGrid();
+</script>
+</body>
+</html>
