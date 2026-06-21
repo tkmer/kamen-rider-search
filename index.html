@@ -64,8 +64,6 @@ main{max-width:1200px;margin:0 auto;padding:0 20px 40px;display:grid;grid-templa
 .card-thumb .thumb-visor::before{content:'';position:absolute;inset:2px 4px;background:linear-gradient(90deg,rgba(255,255,255,.15) 0%,rgba(255,255,255,.05) 100%);border-radius:2px 2px 6px 6px}
 .card-thumb .thumb-scan{position:absolute;top:0;left:0;right:0;height:1px;background:rgba(255,255,255,.15);animation:scan 3s ease-in-out infinite}
 @keyframes scan{0%,100%{top:10%;opacity:0}10%{opacity:1}90%{opacity:.3}95%{top:90%;opacity:0}}
-.thumb-ai{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.5s ease}
-.thumb-ai.loaded{opacity:1}
 .era-dot{position:absolute;top:7px;right:7px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
 .era-dot.showa{background:var(--showa-bg);color:var(--showa);border:1px solid var(--showa)}
 .era-dot.heisei{background:var(--heisei-bg);color:var(--heisei);border:1px solid var(--heisei)}
@@ -1705,30 +1703,7 @@ const COLOR_RGB = {
   '桃':'200,60,130','ピンク':'200,80,140',
   '茶':'120,70,30','銅':'160,90,40',
 };
-const COLOR_EN = {
-  '赤':'crimson red','紅':'deep crimson','深紅':'dark red','朱':'vermilion',
-  '青':'cobalt blue','蒼':'deep blue','水色':'sky blue','青緑':'teal',
-  '緑':'emerald green','翠':'jade green','草':'lime green',
-  '黒':'obsidian black','漆黒':'pitch black',
-  '白':'pearl white','銀':'silver','灰':'steel gray',
-  '金':'golden','黄金':'shining gold','黄':'yellow',
-  '紫':'violet purple','藤':'lavender purple','濃紫':'deep purple',
-  '橙':'vivid orange','オレンジ':'vivid orange',
-  '桃':'hot pink','ピンク':'magenta pink',
-  '茶':'bronze brown','銅':'copper',
-};
-function riderColorEn(r){
-  const parts = r.colors.split(/[・\s\/]+/);
-  for(const p of parts)
-    for(const [k,v] of Object.entries(COLOR_EN))
-      if(p.includes(k)) return v;
-  return 'dark silver';
-}
-function riderImgUrl(r, seed){
-  const col = riderColorEn(r);
-  const prompt = encodeURIComponent(`stylish abstract kamen rider mask symbol, ${col} color scheme, glowing visor, dark background, futuristic armor detail, dramatic lighting, digital art`);
-  return `https://image.pollinations.ai/prompt/${prompt}?width=300&height=300&nologo=true&seed=${seed}&model=turbo`;
-}
+
 function riderBgColor(r){
   const parts = r.colors.split(/[・\s\/]+/);
   for(const p of parts)
@@ -1745,13 +1720,11 @@ function riderThumbHtml(r, isDetail=false){
   const visorW = isDetail ? 80 : 44;
   const visorH = isDetail ? 32 : 18;
   const visorB = isDetail ? 28 : 12;
-  const imgUrl = riderImgUrl(r, r.id);
   return `<div style="background:linear-gradient(160deg,${mid} 0%,${dark} 55%,#050508 100%);position:absolute;inset:0"></div>
 <div class="thumb-stripe"></div>
 <div class="thumb-glow" style="background:${glow}"></div>
 <div class="thumb-scan"></div>
-<div class="thumb-visor" style="width:${visorW}px;height:${visorH}px;bottom:${visorB}px"></div>
-<img class="thumb-ai" src="${imgUrl}" loading="lazy" onload="this.classList.add('loaded')" onerror="this.remove()">`;
+<div class="thumb-visor" style="width:${visorW}px;height:${visorH}px;bottom:${visorB}px"></div>`;
 }
 
 const FORM_BASE = 'https://www.kamen-rider-official.com/zukan/forms/';
