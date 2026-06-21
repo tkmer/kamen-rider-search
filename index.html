@@ -57,10 +57,13 @@ main{max-width:1200px;margin:0 auto;padding:0 20px 40px;display:grid;grid-templa
 .rider-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;overflow:hidden}
 .rider-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
 .rider-card.active{border-color:var(--accent2);background:var(--bg3)}
-.card-thumb{height:130px;position:relative;background:var(--bg3);overflow:hidden}
-.card-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.card-thumb .thumb-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:44px;pointer-events:none}
-@keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.card-thumb{height:130px;position:relative;overflow:hidden}
+.card-thumb .thumb-stripe{position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.03),rgba(255,255,255,.03) 2px,transparent 2px,transparent 12px)}
+.card-thumb .thumb-glow{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);width:80px;height:60px;border-radius:50%;filter:blur(20px);opacity:.5}
+.card-thumb .thumb-visor{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:44px;height:18px;border-radius:4px 4px 8px 8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(2px)}
+.card-thumb .thumb-visor::before{content:'';position:absolute;inset:2px 4px;background:linear-gradient(90deg,rgba(255,255,255,.15) 0%,rgba(255,255,255,.05) 100%);border-radius:2px 2px 6px 6px}
+.card-thumb .thumb-scan{position:absolute;top:0;left:0;right:0;height:1px;background:rgba(255,255,255,.15);animation:scan 3s ease-in-out infinite}
+@keyframes scan{0%,100%{top:10%;opacity:0}10%{opacity:1}90%{opacity:.3}95%{top:90%;opacity:0}}
 .era-dot{position:absolute;top:7px;right:7px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
 .era-dot.showa{background:var(--showa-bg);color:var(--showa);border:1px solid var(--showa)}
 .era-dot.heisei{background:var(--heisei-bg);color:var(--heisei);border:1px solid var(--heisei)}
@@ -73,7 +76,9 @@ main{max-width:1200px;margin:0 auto;padding:0 20px 40px;display:grid;grid-templa
 .detail-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:sticky;top:80px;max-height:calc(100vh - 100px);overflow-y:auto}
 .detail-panel.empty{display:flex;align-items:center;justify-content:center;min-height:300px;color:var(--text3);font-size:13px;text-align:center}
 .detail-icon{font-size:80px;text-align:center;padding:16px 0;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:14px}
-.detail-img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius-sm);margin-bottom:14px;display:block;background:var(--bg3)}
+.detail-img{width:100%;aspect-ratio:1;border-radius:var(--radius-sm);margin-bottom:14px;position:relative;overflow:hidden}
+.detail-img .thumb-stripe,.detail-img .thumb-glow,.detail-img .thumb-visor,.detail-img .thumb-scan{position:absolute}
+.detail-img .thumb-visor{width:80px;height:32px;bottom:28px}
 .detail-name{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px}
 .detail-meta{font-size:12px;color:var(--text2);margin-bottom:12px}
 .tag-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
@@ -1686,9 +1691,39 @@ function renderHint(){
   }
 }
 
-function riderImgUrl(r, w=400, h=400){
-  const prompt = `tokusatsu armored superhero, ${r.motif} themed helmet and body armor, ${r.colors} color scheme, dramatic cinematic lighting, hero action pose, dark atmospheric background, highly detailed visor helmet, 8k quality, no text, photorealistic`;
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&seed=${r.id*17+3}&model=flux`;
+const COLOR_RGB = {
+  '赤':'220,50,50','紅':'180,30,50','深紅':'140,20,30','朱':'200,70,30',
+  '青':'40,100,200','蒼':'30,80,160','水色':'60,160,210','青緑':'20,140,160',
+  '緑':'40,160,80','翠':'30,140,70','草':'80,180,80',
+  '黒':'30,20,40','漆黒':'10,10,20',
+  '白':'200,210,220','銀':'130,140,150','灰':'90,100,110',
+  '金':'190,150,30','黄金':'210,170,30','黄':'190,170,30',
+  '紫':'130,40,170','藤':'110,60,170','濃紫':'90,20,130',
+  '橙':'200,100,30','オレンジ':'200,100,30',
+  '桃':'200,60,130','ピンク':'200,80,140',
+  '茶':'120,70,30','銅':'160,90,40',
+};
+function riderBgColor(r){
+  const parts = r.colors.split(/[・\s\/]+/);
+  for(const p of parts)
+    for(const [k,v] of Object.entries(COLOR_RGB))
+      if(p.includes(k)) return v;
+  return '80,90,110';
+}
+function riderThumbHtml(r, isDetail=false){
+  const rgb = riderBgColor(r);
+  const [R,G,B] = rgb.split(',').map(Number);
+  const dark = `rgb(${Math.round(R*.3)},${Math.round(G*.3)},${Math.round(B*.3)})`;
+  const mid  = `rgba(${rgb},.7)`;
+  const glow = `rgba(${rgb},1)`;
+  const visorW = isDetail ? 80 : 44;
+  const visorH = isDetail ? 32 : 18;
+  const visorB = isDetail ? 28 : 12;
+  return `<div style="background:linear-gradient(160deg,${mid} 0%,${dark} 55%,#050508 100%);position:absolute;inset:0"></div>
+<div class="thumb-stripe"></div>
+<div class="thumb-glow" style="background:${glow}"></div>
+<div class="thumb-scan"></div>
+<div class="thumb-visor" style="width:${visorW}px;height:${visorH}px;bottom:${visorB}px"></div>`;
 }
 
 const FORM_BASE = 'https://www.kamen-rider-official.com/zukan/forms/';
@@ -1846,8 +1881,7 @@ function renderGrid(){
   grid.innerHTML = results.map(({item:r}) => `
     <div class="rider-card${selectedId===r.id?' active':''}" onclick="selectRider(${r.id})">
       <div class="card-thumb">
-        <span class="thumb-fallback">${r.emoji}</span>
-        <img src="${riderImgUrl(r,300,130)}" loading="lazy" alt="${r.name}" onerror="this.remove()">
+        ${riderThumbHtml(r)}
         <span class="era-dot ${eraClass(r.era)}">${r.era}</span>
       </div>
       <div class="card-body">
@@ -1877,7 +1911,7 @@ function renderPanel(){
   if(!r){ return; }
   panel.className = 'detail-panel';
   panel.innerHTML = `
-    <img class="detail-img" src="${riderImgUrl(r,360,360)}" alt="${r.name}" loading="lazy" onerror="this.outerHTML='<div class=\\'detail-icon\\'>${r.emoji}</div>'">
+    <div class="detail-img">${riderThumbHtml(r,true)}</div>
     <div class="detail-name">${hl(r.name, expanded)}</div>
     <div class="detail-meta">${r.series}（${r.year}年）</div>
     <div class="tag-row">
