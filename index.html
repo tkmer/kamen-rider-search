@@ -58,11 +58,8 @@ main{max-width:1200px;margin:0 auto;padding:0 20px 40px;display:grid;grid-templa
 .rider-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
 .rider-card.active{border-color:var(--accent2);background:var(--bg3)}
 .card-thumb{height:130px;position:relative;overflow:hidden}
-.card-thumb .thumb-stripe{position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.03),rgba(255,255,255,.03) 2px,transparent 2px,transparent 12px)}
-.card-thumb .thumb-glow{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);width:80px;height:60px;border-radius:50%;filter:blur(20px);opacity:.5}
-.card-thumb .thumb-visor{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:44px;height:18px;border-radius:4px 4px 8px 8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(2px)}
-.card-thumb .thumb-visor::before{content:'';position:absolute;inset:2px 4px;background:linear-gradient(90deg,rgba(255,255,255,.15) 0%,rgba(255,255,255,.05) 100%);border-radius:2px 2px 6px 6px}
-.card-thumb .thumb-scan{position:absolute;top:0;left:0;right:0;height:1px;background:rgba(255,255,255,.15);animation:scan 3s ease-in-out infinite}
+.card-thumb .thumb-stripe{position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.04),rgba(255,255,255,.04) 1px,transparent 1px,transparent 10px);pointer-events:none}
+.card-thumb .thumb-scan{position:absolute;top:0;left:0;right:0;height:1px;background:rgba(255,255,255,.2);animation:scan 3s ease-in-out infinite;pointer-events:none}
 @keyframes scan{0%,100%{top:10%;opacity:0}10%{opacity:1}90%{opacity:.3}95%{top:90%;opacity:0}}
 .era-dot{position:absolute;top:7px;right:7px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
 .era-dot.showa{background:var(--showa-bg);color:var(--showa);border:1px solid var(--showa)}
@@ -77,8 +74,7 @@ main{max-width:1200px;margin:0 auto;padding:0 20px 40px;display:grid;grid-templa
 .detail-panel.empty{display:flex;align-items:center;justify-content:center;min-height:300px;color:var(--text3);font-size:13px;text-align:center}
 .detail-icon{font-size:80px;text-align:center;padding:16px 0;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:14px}
 .detail-img{width:100%;aspect-ratio:1;border-radius:var(--radius-sm);margin-bottom:14px;position:relative;overflow:hidden}
-.detail-img .thumb-stripe,.detail-img .thumb-glow,.detail-img .thumb-visor,.detail-img .thumb-scan{position:absolute}
-.detail-img .thumb-visor{width:80px;height:32px;bottom:28px}
+.detail-img .thumb-stripe,.detail-img .thumb-scan{position:absolute}
 .detail-name{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px}
 .detail-meta{font-size:12px;color:var(--text2);margin-bottom:12px}
 .tag-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
@@ -1714,29 +1710,51 @@ function riderColors(r){
 }
 function riderThumbHtml(r, isDetail=false){
   const rgbs = riderColors(r);
-  const glow = `rgba(${rgbs[0]},1)`;
-  const visorW = isDetail ? 80 : 44;
-  const visorH = isDetail ? 32 : 18;
-  const visorB = isDetail ? 28 : 12;
-  let bg;
-  if(rgbs.length === 1){
-    const [R,G,B] = rgbs[0].split(',').map(Number);
-    const dark = `rgb(${Math.round(R*.3)},${Math.round(G*.3)},${Math.round(B*.3)})`;
-    bg = `linear-gradient(160deg,rgba(${rgbs[0]},.8) 0%,${dark} 55%,#050508 100%)`;
-  } else {
-    // 複数色：ライダーの全カラーをグラデーションに
-    const stops = rgbs.map((rgb,i) => {
-      const pct = Math.round(i / (rgbs.length - 1) * 75);
-      return `rgba(${rgb},.75) ${pct}%`;
-    });
-    stops.push('#050508 100%');
-    bg = `linear-gradient(135deg,${stops.join(',')})`;
+  const s = isDetail ? 2.2 : 1;
+  const c0 = rgbs[0];
+  const c1 = rgbs[1] || rgbs[0];
+  const c2 = rgbs[2] || c1;
+
+  // 色ごとのゾーン背景（横グラデで複数色を表現）
+  function zoneBg(cols, opacity){
+    if(cols.length === 1) return `rgba(${cols[0]},${opacity})`;
+    const step = 100 / (cols.length - 1);
+    return `linear-gradient(90deg,${cols.map((c,i)=>`rgba(${c},${opacity}) ${Math.round(i*step)}%`).join(',')})`;
   }
-  return `<div style="background:${bg};position:absolute;inset:0"></div>
+
+  const [R,G,B] = c0.split(',').map(Number);
+  const darkBg = `rgb(${Math.round(R*.15)},${Math.round(G*.15)},${Math.round(B*.15)})`;
+
+  // HEAD: 上部38% — ヘルメット・バイザー
+  const headBg = zoneBg(rgbs, .85);
+  const visorW = Math.round(36*s);
+  const visorH = Math.round(7*s);
+  const visorB = Math.round(5*s);
+  const glowSize = Math.round(20*s);
+
+  // BODY: 中部38% — 胸・ベルト
+  const bodyBg = zoneBg(rgbs, .65);
+  const beltW = Math.round(22*s);
+  const chestW = Math.round(18*s);
+
+  // LEGS: 下部24% — 脚
+  const legBg = zoneBg(rgbs, .45);
+
+  return `<div style="position:absolute;inset:0;background:#080810"></div>
+<div style="position:absolute;top:0;left:0;right:0;height:38%;background:${headBg}">
+  <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:${glowSize*2}px;height:${glowSize}px;background:radial-gradient(ellipse,rgba(${c0},.6) 0%,transparent 70%);filter:blur(${Math.round(4*s)}px)"></div>
+  <div style="position:absolute;bottom:${visorB}px;left:50%;transform:translateX(-50%);width:${visorW}px;height:${visorH}px;border-radius:2px 2px 5px 5px;background:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.6);box-shadow:0 0 ${Math.round(6*s)}px rgba(255,255,255,.4)"></div>
+</div>
+<div style="position:absolute;top:38%;left:0;right:0;height:38%;background:${bodyBg}">
+  <div style="position:absolute;top:28%;left:50%;transform:translateX(-50%);width:${chestW}px;height:${Math.round(2*s)}px;background:rgba(255,255,255,.5)"></div>
+  <div style="position:absolute;top:55%;left:50%;transform:translateX(-50%);width:${beltW}px;height:${Math.round(3*s)}px;border-radius:1px;background:rgba(0,0,0,.4);border-top:1px solid rgba(255,255,255,.25)"></div>
+</div>
+<div style="position:absolute;top:76%;left:0;right:0;bottom:0;background:${legBg}">
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,${darkBg} 100%)"></div>
+  <div style="position:absolute;top:0;bottom:0;left:calc(50% - 1px);width:1px;background:rgba(0,0,0,.35)"></div>
+</div>
 <div class="thumb-stripe"></div>
-<div class="thumb-glow" style="background:${glow}"></div>
-<div class="thumb-scan"></div>
-<div class="thumb-visor" style="width:${visorW}px;height:${visorH}px;bottom:${visorB}px"></div>`;
+<div class="thumb-scan"></div>`;
 }
 
 const FORM_BASE = 'https://www.kamen-rider-official.com/zukan/forms/';
