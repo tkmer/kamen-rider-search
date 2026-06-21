@@ -57,7 +57,13 @@ main{max-width:1200px;margin:0 auto;padding:0 20px 40px;display:grid;grid-templa
 .rider-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;overflow:hidden}
 .rider-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
 .rider-card.active{border-color:var(--accent2);background:var(--bg3)}
-.card-thumb{height:110px;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;background:var(--bg3)}
+.card-thumb{height:130px;position:relative;background:var(--bg3);overflow:hidden}
+.card-thumb img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .4s}
+.card-thumb img.loaded{opacity:1}
+.card-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%);background-size:300%;animation:shimmer 1.8s infinite;pointer-events:none}
+.card-thumb img.loaded ~ * + .era-dot,
+.card-thumb img.loaded ~ .era-dot{/* shimmer still shows, that's fine */}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
 .era-dot{position:absolute;top:7px;right:7px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
 .era-dot.showa{background:var(--showa-bg);color:var(--showa);border:1px solid var(--showa)}
 .era-dot.heisei{background:var(--heisei-bg);color:var(--heisei);border:1px solid var(--heisei)}
@@ -70,6 +76,8 @@ main{max-width:1200px;margin:0 auto;padding:0 20px 40px;display:grid;grid-templa
 .detail-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:sticky;top:80px;max-height:calc(100vh - 100px);overflow-y:auto}
 .detail-panel.empty{display:flex;align-items:center;justify-content:center;min-height:300px;color:var(--text3);font-size:13px;text-align:center}
 .detail-icon{font-size:80px;text-align:center;padding:16px 0;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:14px}
+.detail-img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius-sm);margin-bottom:14px;display:block;background:var(--bg3);opacity:0;transition:opacity .5s}
+.detail-img.loaded{opacity:1}
 .detail-name{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px}
 .detail-meta{font-size:12px;color:var(--text2);margin-bottom:12px}
 .tag-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
@@ -1682,6 +1690,11 @@ function renderHint(){
   }
 }
 
+function riderImgUrl(r, w=400, h=400){
+  const prompt = `tokusatsu armored superhero, ${r.motif} themed helmet and body armor, ${r.colors} color scheme, dramatic cinematic lighting, hero action pose, dark atmospheric background, highly detailed visor helmet, 8k quality, no text, photorealistic`;
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&seed=${r.id*17+3}&model=flux`;
+}
+
 const FORM_BASE = 'https://www.kamen-rider-official.com/zukan/forms/';
 // t:'C' = フォームチェンジ（横並び等価）、省略 = 強化フォーム
 const FORMS = {
@@ -1837,7 +1850,7 @@ function renderGrid(){
   grid.innerHTML = results.map(({item:r}) => `
     <div class="rider-card${selectedId===r.id?' active':''}" onclick="selectRider(${r.id})">
       <div class="card-thumb">
-        <span>${r.emoji}</span>
+        <img src="${riderImgUrl(r,300,130)}" loading="lazy" alt="${r.name}" onload="this.classList.add('loaded')">
         <span class="era-dot ${eraClass(r.era)}">${r.era}</span>
       </div>
       <div class="card-body">
@@ -1867,7 +1880,7 @@ function renderPanel(){
   if(!r){ return; }
   panel.className = 'detail-panel';
   panel.innerHTML = `
-    <div class="detail-icon">${r.emoji}</div>
+    <img class="detail-img" src="${riderImgUrl(r,360,360)}" alt="${r.name}" loading="lazy" onload="this.classList.add('loaded')">
     <div class="detail-name">${hl(r.name, expanded)}</div>
     <div class="detail-meta">${r.series}（${r.year}年）</div>
     <div class="tag-row">
