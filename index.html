@@ -1715,37 +1715,30 @@ function riderThumbHtml(r, isDetail=false){
   const c0 = rgbs[0];
   const c1 = rgbs[1] || rgbs[0];
   const c2 = rgbs[2] || c1;
-  const a = (rgb,op) => `rgba(${rgb},${op})`;
-  const dim = (rgb,f) => rgb.split(',').map(v=>Math.round(v*f)).join(',');
+  const a = (rgb, op) => `rgba(${rgb},${op})`;
+  const dim = (rgb, f) => rgb.split(',').map(v => Math.round(v * f)).join(',');
 
-  // メイン背景グラデーション（斜め方向で奥行き感）
-  const mainGrad = rgbs.length >= 3
-    ? `linear-gradient(150deg,${a(c0,.95)} 0%,${a(c1,.7)} 40%,${a(c2,.5)} 70%,#020205 100%)`
-    : rgbs.length === 2
-    ? `linear-gradient(135deg,${a(c0,.9)} 0%,${a(c1,.8)} 55%,#020205 100%)`
-    : `linear-gradient(150deg,${a(c0,.95)} 0%,${a(dim(c0,.45),.9)} 65%,#020205 100%)`;
+  // メイン背景：ライダーカラーをそのまま斜めグラデーションに
+  let mainGrad;
+  if(rgbs.length >= 3){
+    mainGrad = `linear-gradient(135deg,${a(c0,.95)} 0%,${a(c1,.85)} 45%,${a(c2,.75)} 80%,${a(dim(c2,.2),.9)} 100%)`;
+  } else if(rgbs.length === 2){
+    mainGrad = `linear-gradient(135deg,${a(c0,.95)} 0%,${a(c1,.85)} 60%,${a(dim(c1,.25),.95)} 100%)`;
+  } else {
+    // 単色：濃淡グラデ
+    mainGrad = `linear-gradient(135deg,${a(c0,.95)} 0%,${a(dim(c0,.55),.9)} 55%,${a(dim(c0,.18),.95)} 100%)`;
+  }
 
-  // ゾーン色（3色→頭/体/脚、2色→横split、1色→単色）
-  const hC = c0, bC = c1, lC = c2;
-  const headZone = rgbs.length >= 3 ? `radial-gradient(ellipse at 50% 120%,${a(hC,.8)} 0%,transparent 70%)`
-    : `radial-gradient(ellipse at 50% 120%,${a(hC,.6)} 0%,transparent 65%)`;
-  const bodySlash = `linear-gradient(108deg,transparent 35%,${a(bC,.25)} 52%,transparent 68%)`;
-
-  const vW = Math.round(38*s), vH = Math.round(8*s);
-  const glowR = Math.round(28*s);
+  const vW = Math.round(40*s), vH = Math.round(8*s);
+  const glowR = Math.round(30*s);
 
   return `
 <div style="position:absolute;inset:0;background:#040408"></div>
 <div style="position:absolute;inset:0;background:${mainGrad}"></div>
-<div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.7) 100%)"></div>
-<div style="position:absolute;top:0;left:0;right:0;height:45%;background:${headZone}"></div>
-<div style="position:absolute;inset:0;background:${bodySlash}"></div>
-<div style="position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.025),rgba(255,255,255,.025) 1px,transparent 1px,transparent 9px)"></div>
-<div style="position:absolute;top:${Math.round(15*s)}px;left:50%;transform:translateX(-50%);width:${glowR*2}px;height:${glowR}px;border-radius:50%;background:radial-gradient(circle,${a(hC,.8)} 0%,transparent 70%);filter:blur(${Math.round(10*s)}px)"></div>
-<div style="position:absolute;top:${Math.round(33*s)}px;left:50%;transform:translateX(-50%);width:${vW}px;height:${vH}px;border-radius:3px 3px 7px 7px;background:linear-gradient(90deg,${a(hC,.2)},rgba(255,255,255,.55),${a(hC,.2)});border:1px solid rgba(255,255,255,.8);box-shadow:0 0 ${Math.round(10*s)}px ${a(hC,.9)},0 0 ${Math.round(4*s)}px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.4)"></div>
-<div style="position:absolute;top:${Math.round(55*s)}px;left:50%;transform:translateX(-50%);width:${Math.round(30*s)}px;height:${Math.round(2*s)}px;background:linear-gradient(90deg,transparent,${a(bC,.9)},transparent)"></div>
-<div style="position:absolute;top:${Math.round(72*s)}px;left:15%;right:15%;height:${Math.round(3*s)}px;background:linear-gradient(90deg,transparent,${a(bC,.6)},${a(bC,.6)},transparent);border-radius:2px"></div>
-<div style="position:absolute;top:${Math.round(87*s)}px;bottom:0;left:calc(50% - 1px);width:1px;background:linear-gradient(180deg,${a(lC,.5)},transparent)"></div>
+<div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.65) 100%)"></div>
+<div style="position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.022),rgba(255,255,255,.022) 1px,transparent 1px,transparent 9px)"></div>
+<div style="position:absolute;top:${Math.round(12*s)}px;left:50%;transform:translateX(-50%);width:${glowR*2}px;height:${glowR}px;border-radius:50%;background:radial-gradient(circle,${a(c0,.7)} 0%,transparent 70%);filter:blur(${Math.round(12*s)}px)"></div>
+<div style="position:absolute;top:${Math.round(32*s)}px;left:50%;transform:translateX(-50%);width:${vW}px;height:${vH}px;border-radius:3px 3px 8px 8px;background:linear-gradient(90deg,${a(c0,.15)},rgba(255,255,255,.6),${a(c0,.15)});border:1px solid rgba(255,255,255,.85);box-shadow:0 0 ${Math.round(12*s)}px ${a(c0,1)},0 0 ${Math.round(4*s)}px rgba(255,255,255,.9)"></div>
 <div class="thumb-scan"></div>`;
 }
 
