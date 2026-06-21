@@ -231,7 +231,7 @@ const DB = [
   // ── 昭和 ─────────────────────────────────
   {
     id:1, emoji:'🦗', name:'仮面ライダー1号', rider:'本郷猛', series:'仮面ライダー', era:'昭和', year:1971,
-    motif:'バッタ', colors:'赤・黒・白スカーフ',
+    motif:'バッタ', colors:'赤・黒',
     catchphrase:'変身！',
     song:'レッツゴー!!ライダーキック',
     features:'緑の複眼、バッタモチーフ、赤いマフラー、サイクロン号',
@@ -328,7 +328,7 @@ const DB = [
   // ── 平成1期 ──────────────────────────────
   {
     id:13, emoji:'🔮', name:'仮面ライダークウガ', rider:'五代雄介', series:'仮面ライダークウガ', era:'平成', year:2000,
-    motif:'古代の戦士', colors:'白・赤・黒・青（フォーム別）',
+    motif:'古代の戦士', colors:'赤・黒・銀',
     catchphrase:'変身！',
     song:'仮面ライダークウガ!',
     features:'アークルベルト装着変身、グローイング→マイティ→ドラゴン→ペガサス→アルティメットの多フォーム、古代文字マーク、グロンギと戦う',
@@ -432,7 +432,7 @@ const DB = [
   },
   {
     id:26, emoji:'🌟', name:'仮面ライダーゼロノス', rider:'桜井侑斗', series:'仮面ライダー電王', era:'平成', year:2007,
-    motif:'時間・電車・牛（ウシ）', colors:'黒・金',
+    motif:'時間・電車・牛（ウシ）', colors:'紺・銀',
     catchphrase:'私は消えない！',
     song:'Climax Jump',
     features:'黒金カラー、ガオウ（タイムトレイン）、牛モチーフ、記憶が消えていく設定',
@@ -465,7 +465,7 @@ const DB = [
   // ── 平成2期 ──────────────────────────────
   {
     id:30, emoji:'🔍', name:'仮面ライダーW', rider:'左翔太郎 & フィリップ', series:'仮面ライダーW', era:'平成', year:2009,
-    motif:'探偵・ガイアメモリ', colors:'黒・緑（サイクロンジョーカー）',
+    motif:'探偵・ガイアメモリ', colors:'緑・紫',
     catchphrase:'さあ、お前の罪を数えろ！',
     song:'W-B-X ~W-Boiled Extreme~',
     features:'二人で一人のライダー、左右非対称デザイン、ガイアメモリ差込変身、風都探偵事務所',
@@ -1692,12 +1692,13 @@ const COLOR_RGB = {
   '青':'40,100,200','蒼':'30,80,160','水色':'60,160,210','青緑':'20,140,160',
   '緑':'40,160,80','翠':'30,140,70','草':'80,180,80',
   '黒':'30,20,40','漆黒':'10,10,20',
-  '白':'200,210,220','銀':'130,140,150','灰':'90,100,110',
-  '金':'190,150,30','黄金':'210,170,30','黄':'190,170,30',
-  '紫':'130,40,170','藤':'110,60,170','濃紫':'90,20,130',
-  '橙':'200,100,30','オレンジ':'200,100,30',
-  '桃':'200,60,130','ピンク':'200,80,140',
-  '茶':'120,70,30','銅':'160,90,40',
+  '白':'245,248,255','銀':'140,148,160','灰':'90,100,110','グレー':'100,105,115',
+  '金':'200,160,30','黄金':'220,180,30','黄':'200,180,30',
+  '紫':'140,45,180','藤':'115,65,175','濃紫':'95,22,135',
+  '橙':'210,105,25','オレンジ':'210,105,25',
+  '桃':'205,65,135','ピンク':'205,85,145','マゼンタ':'210,30,100',
+  '茶':'125,72,30','銅':'165,92,40',
+  '紺':'18,45,130','藍':'25,60,150','水色':'55,165,215','青緑':'18,145,162',
 };
 
 function riderColors(r){
@@ -1725,20 +1726,27 @@ function riderThumbHtml(r, isDetail=false){
   const [R,G,B] = c0.split(',').map(Number);
   const darkBg = `rgb(${Math.round(R*.15)},${Math.round(G*.15)},${Math.round(B*.15)})`;
 
-  // HEAD: 上部38% — ヘルメット・バイザー
-  const headBg = zoneBg(rgbs, .85);
+  // 色数に応じてゾーン配色を決定
+  // 3色以上: 頭=c0, 体=c1, 脚=c2（オーズのタトバ等に最適）
+  // 2色: 全ゾーン横分割（Wのサイクロンジョーカー等に最適）
+  // 1色: 全ゾーン同色
+  let headBg, bodyBg, legBg;
+  if(rgbs.length >= 3){
+    headBg = `rgba(${c0},.9)`;
+    bodyBg = `rgba(${c1},.75)`;
+    legBg  = `rgba(${c2},.6)`;
+  } else {
+    headBg = zoneBg(rgbs, .88);
+    bodyBg = zoneBg(rgbs, .70);
+    legBg  = zoneBg(rgbs, .50);
+  }
+
   const visorW = Math.round(36*s);
   const visorH = Math.round(7*s);
   const visorB = Math.round(5*s);
   const glowSize = Math.round(20*s);
-
-  // BODY: 中部38% — 胸・ベルト
-  const bodyBg = zoneBg(rgbs, .65);
   const beltW = Math.round(22*s);
   const chestW = Math.round(18*s);
-
-  // LEGS: 下部24% — 脚
-  const legBg = zoneBg(rgbs, .45);
 
   return `<div style="position:absolute;inset:0;background:#080810"></div>
 <div style="position:absolute;top:0;left:0;right:0;height:38%;background:${headBg}">
