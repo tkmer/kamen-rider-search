@@ -352,7 +352,7 @@ const DB = [
   },
   {
     id:16, emoji:'🐉', name:'仮面ライダー龍騎', rider:'城戸真司', series:'仮面ライダー龍騎', era:'平成', year:2002,
-    motif:'ドラゴン・カード', colors:'赤・黒',
+    motif:'ドラゴン・カード', colors:'赤・黒', eye:'赤',
     catchphrase:'変身！',
     song:'Alive A life',
     features:'契約モンスター・ドラグレッダー、ミラーワールド、カードデッキシステム',
@@ -368,7 +368,7 @@ const DB = [
   },
   {
     id:18, emoji:'🌀', name:'仮面ライダーファイズ', rider:'乾巧', series:'仮面ライダー555', era:'平成', year:2003,
-    motif:'ギリシャ文字φ（ファイ）', colors:'銀・黒',
+    motif:'ギリシャ文字φ（ファイ）', colors:'銀・黒', eye:'橙',
     catchphrase:'変身！',
     song:"Justiφ's",
     features:'φマーク、ファイズギア（スマホ型）、フォトンブラッド（光の刃）、クリムゾンスマッシュ',
@@ -408,7 +408,7 @@ const DB = [
   },
   {
     id:23, emoji:'🐛', name:'仮面ライダーカブト', rider:'天道総司', series:'仮面ライダーカブト', era:'平成', year:2006,
-    motif:'カブトムシ', colors:'赤・金',
+    motif:'カブトムシ', colors:'赤・金', eye:'赤',
     catchphrase:'天の道を往き、総てを司る。それが仮面ライダーカブトだ！',
     song:'NEXT LEVEL',
     features:'キャストオフ（外装分離）→ライダーフォーム、クロックアップ（超高速移動）、角',
@@ -424,7 +424,7 @@ const DB = [
   },
   {
     id:25, emoji:'⏳', name:'仮面ライダー電王', rider:'野上良太郎', series:'仮面ライダー電王', era:'平成', year:2007,
-    motif:'列車・時間旅行', colors:'赤・金・黒',
+    motif:'列車・時間旅行', colors:'赤・金・黒', eye:'黄',
     catchphrase:'時刻を超えて、俺、参上！！',
     song:'Climax Jump',
     features:'イマジン（モモタロス等）が憑依、デンライナー（タイムトレイン）、複数人格変身',
@@ -440,7 +440,7 @@ const DB = [
   },
   {
     id:27, emoji:'🦷', name:'仮面ライダーキバ', rider:'紅渡', series:'仮面ライダーキバ', era:'平成', year:2008,
-    motif:'吸血鬼・城', colors:'赤・黒・白',
+    motif:'吸血鬼・城', colors:'赤・黒・白', eye:'赤',
     catchphrase:'変身！',
     song:'Break the Chain',
     features:'キバットバット3世が噛む変身、城モチーフの装甲、牙、足のチェーン、ガーゴイル型武器',
@@ -456,7 +456,7 @@ const DB = [
   },
   {
     id:29, emoji:'🃏', name:'仮面ライダーディケイド', rider:'門矢士', series:'仮面ライダーディケイド', era:'平成', year:2009,
-    motif:'歴代ライダー全員', colors:'マゼンタ・白・黒',
+    motif:'歴代ライダー全員', colors:'マゼンタ・白・黒', eye:'緑',
     catchphrase:'壊して通るだけだ',
     song:'Ride the Wind',
     features:'歴代ライダーにフォームチェンジ、カードシステム、マゼンタ×白のストライプ、破壊の旅人',
@@ -569,7 +569,7 @@ const DB = [
   },
   {
     id:43, emoji:'👻', name:'仮面ライダーゴースト', rider:'天空寺タケル', series:'仮面ライダーゴースト', era:'平成', year:2015,
-    motif:'幽霊・英雄魂', colors:'白・橙・黒',
+    motif:'幽霊・英雄魂', colors:'白・橙・黒', eye:'橙',
     catchphrase:'俺、参上！',
     song:'Galaxy Next Door',
     features:'眼魂で偉人（ムサシ魂等）に変身、幽霊モチーフ、ゴーストドライバー、一度死んでいる',
@@ -634,7 +634,7 @@ const DB = [
   // ── 令和 ──────────────────────────────────
   {
     id:51, emoji:'🤖', name:'仮面ライダーゼロワン', rider:'飛電或人', series:'仮面ライダーゼロワン', era:'令和', year:2019,
-    motif:'AIバッタ・昆虫', colors:'黄・黒・銀',
+    motif:'AIバッタ・昆虫', colors:'黄・黒・銀', eye:'黄',
     catchphrase:'世界最強の社長はただひとり！オレだ！',
     song:'REAL×EYEZ',
     features:'バッタ眼（黄緑に光る）、AI進化モチーフ、プログライズキー、衛星ゼア、ヒューマギア',
@@ -1717,6 +1717,8 @@ function riderThumbHtml(r, isDetail=false){
   const c2 = rgbs[2] || c1;
   const a = (rgb, op) => `rgba(${rgb},${op})`;
   const dim = (rgb, f) => rgb.split(',').map(v => Math.round(v * f)).join(',');
+  // 眼（バイザー）カラー：eye フィールドがあれば優先
+  const eyeRgb = r.eye ? (COLOR_RGB[r.eye] || c0) : c0;
 
   // メイン背景：ライダーカラーをそのまま斜めグラデーションに
   let mainGrad;
@@ -1737,8 +1739,8 @@ function riderThumbHtml(r, isDetail=false){
 <div style="position:absolute;inset:0;background:${mainGrad}"></div>
 <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.65) 100%)"></div>
 <div style="position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.022),rgba(255,255,255,.022) 1px,transparent 1px,transparent 9px)"></div>
-<div style="position:absolute;top:${Math.round(12*s)}px;left:50%;transform:translateX(-50%);width:${glowR*2}px;height:${glowR}px;border-radius:50%;background:radial-gradient(circle,${a(c0,.7)} 0%,transparent 70%);filter:blur(${Math.round(12*s)}px)"></div>
-<div style="position:absolute;top:${Math.round(32*s)}px;left:50%;transform:translateX(-50%);width:${vW}px;height:${vH}px;border-radius:3px 3px 8px 8px;background:linear-gradient(90deg,${a(c0,.15)},rgba(255,255,255,.6),${a(c0,.15)});border:1px solid rgba(255,255,255,.85);box-shadow:0 0 ${Math.round(12*s)}px ${a(c0,1)},0 0 ${Math.round(4*s)}px rgba(255,255,255,.9)"></div>
+<div style="position:absolute;top:${Math.round(12*s)}px;left:50%;transform:translateX(-50%);width:${glowR*2}px;height:${glowR}px;border-radius:50%;background:radial-gradient(circle,${a(eyeRgb,.75)} 0%,transparent 70%);filter:blur(${Math.round(12*s)}px)"></div>
+<div style="position:absolute;top:${Math.round(32*s)}px;left:50%;transform:translateX(-50%);width:${vW}px;height:${vH}px;border-radius:3px 3px 8px 8px;background:linear-gradient(90deg,${a(eyeRgb,.2)},rgba(255,255,255,.6),${a(eyeRgb,.2)});border:1px solid rgba(255,255,255,.85);box-shadow:0 0 ${Math.round(12*s)}px ${a(eyeRgb,1)},0 0 ${Math.round(4*s)}px rgba(255,255,255,.9)"></div>
 <div class="thumb-scan"></div>`;
 }
 
