@@ -1669,7 +1669,8 @@ function getResults(){
 
   if(!raw){
     expandedTerms = [];
-    results = DB.map(r => ({item:r, score:1}));
+    results = DB.map(r => ({item:r, score:1}))
+      .sort((a,b) => a.item.year - b.item.year || a.item.id - b.item.id);
   } else {
     const expanded = expandQuery(raw);
     expandedTerms = expanded.split(' ').filter(t => !raw.split(/\s+/).includes(t));
