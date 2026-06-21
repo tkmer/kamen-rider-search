@@ -432,7 +432,7 @@ const DB = [
   },
   {
     id:26, emoji:'🌟', name:'仮面ライダーゼロノス', rider:'桜井侑斗', series:'仮面ライダー電王', era:'平成', year:2007,
-    motif:'時間・電車・牛（ウシ）', colors:'紺・銀',
+    motif:'時間・電車・牛（ウシ）', colors:'緑・黒',
     catchphrase:'私は消えない！',
     song:'Climax Jump',
     features:'黒金カラー、ガオウ（タイムトレイン）、牛モチーフ、記憶が消えていく設定',
@@ -1715,53 +1715,37 @@ function riderThumbHtml(r, isDetail=false){
   const c0 = rgbs[0];
   const c1 = rgbs[1] || rgbs[0];
   const c2 = rgbs[2] || c1;
+  const a = (rgb,op) => `rgba(${rgb},${op})`;
+  const dim = (rgb,f) => rgb.split(',').map(v=>Math.round(v*f)).join(',');
 
-  // 色ごとのゾーン背景（横グラデで複数色を表現）
-  function zoneBg(cols, opacity){
-    if(cols.length === 1) return `rgba(${cols[0]},${opacity})`;
-    const step = 100 / (cols.length - 1);
-    return `linear-gradient(90deg,${cols.map((c,i)=>`rgba(${c},${opacity}) ${Math.round(i*step)}%`).join(',')})`;
-  }
+  // メイン背景グラデーション（斜め方向で奥行き感）
+  const mainGrad = rgbs.length >= 3
+    ? `linear-gradient(150deg,${a(c0,.95)} 0%,${a(c1,.7)} 40%,${a(c2,.5)} 70%,#020205 100%)`
+    : rgbs.length === 2
+    ? `linear-gradient(135deg,${a(c0,.9)} 0%,${a(c1,.8)} 55%,#020205 100%)`
+    : `linear-gradient(150deg,${a(c0,.95)} 0%,${a(dim(c0,.45),.9)} 65%,#020205 100%)`;
 
-  const [R,G,B] = c0.split(',').map(Number);
-  const darkBg = `rgb(${Math.round(R*.15)},${Math.round(G*.15)},${Math.round(B*.15)})`;
+  // ゾーン色（3色→頭/体/脚、2色→横split、1色→単色）
+  const hC = c0, bC = c1, lC = c2;
+  const headZone = rgbs.length >= 3 ? `radial-gradient(ellipse at 50% 120%,${a(hC,.8)} 0%,transparent 70%)`
+    : `radial-gradient(ellipse at 50% 120%,${a(hC,.6)} 0%,transparent 65%)`;
+  const bodySlash = `linear-gradient(108deg,transparent 35%,${a(bC,.25)} 52%,transparent 68%)`;
 
-  // 色数に応じてゾーン配色を決定
-  // 3色以上: 頭=c0, 体=c1, 脚=c2（オーズのタトバ等に最適）
-  // 2色: 全ゾーン横分割（Wのサイクロンジョーカー等に最適）
-  // 1色: 全ゾーン同色
-  let headBg, bodyBg, legBg;
-  if(rgbs.length >= 3){
-    headBg = `rgba(${c0},.9)`;
-    bodyBg = `rgba(${c1},.75)`;
-    legBg  = `rgba(${c2},.6)`;
-  } else {
-    headBg = zoneBg(rgbs, .88);
-    bodyBg = zoneBg(rgbs, .70);
-    legBg  = zoneBg(rgbs, .50);
-  }
+  const vW = Math.round(38*s), vH = Math.round(8*s);
+  const glowR = Math.round(28*s);
 
-  const visorW = Math.round(36*s);
-  const visorH = Math.round(7*s);
-  const visorB = Math.round(5*s);
-  const glowSize = Math.round(20*s);
-  const beltW = Math.round(22*s);
-  const chestW = Math.round(18*s);
-
-  return `<div style="position:absolute;inset:0;background:#080810"></div>
-<div style="position:absolute;top:0;left:0;right:0;height:38%;background:${headBg}">
-  <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:${glowSize*2}px;height:${glowSize}px;background:radial-gradient(ellipse,rgba(${c0},.6) 0%,transparent 70%);filter:blur(${Math.round(4*s)}px)"></div>
-  <div style="position:absolute;bottom:${visorB}px;left:50%;transform:translateX(-50%);width:${visorW}px;height:${visorH}px;border-radius:2px 2px 5px 5px;background:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.6);box-shadow:0 0 ${Math.round(6*s)}px rgba(255,255,255,.4)"></div>
-</div>
-<div style="position:absolute;top:38%;left:0;right:0;height:38%;background:${bodyBg}">
-  <div style="position:absolute;top:28%;left:50%;transform:translateX(-50%);width:${chestW}px;height:${Math.round(2*s)}px;background:rgba(255,255,255,.5)"></div>
-  <div style="position:absolute;top:55%;left:50%;transform:translateX(-50%);width:${beltW}px;height:${Math.round(3*s)}px;border-radius:1px;background:rgba(0,0,0,.4);border-top:1px solid rgba(255,255,255,.25)"></div>
-</div>
-<div style="position:absolute;top:76%;left:0;right:0;bottom:0;background:${legBg}">
-  <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,${darkBg} 100%)"></div>
-  <div style="position:absolute;top:0;bottom:0;left:calc(50% - 1px);width:1px;background:rgba(0,0,0,.35)"></div>
-</div>
-<div class="thumb-stripe"></div>
+  return `
+<div style="position:absolute;inset:0;background:#040408"></div>
+<div style="position:absolute;inset:0;background:${mainGrad}"></div>
+<div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.7) 100%)"></div>
+<div style="position:absolute;top:0;left:0;right:0;height:45%;background:${headZone}"></div>
+<div style="position:absolute;inset:0;background:${bodySlash}"></div>
+<div style="position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.025),rgba(255,255,255,.025) 1px,transparent 1px,transparent 9px)"></div>
+<div style="position:absolute;top:${Math.round(15*s)}px;left:50%;transform:translateX(-50%);width:${glowR*2}px;height:${glowR}px;border-radius:50%;background:radial-gradient(circle,${a(hC,.8)} 0%,transparent 70%);filter:blur(${Math.round(10*s)}px)"></div>
+<div style="position:absolute;top:${Math.round(33*s)}px;left:50%;transform:translateX(-50%);width:${vW}px;height:${vH}px;border-radius:3px 3px 7px 7px;background:linear-gradient(90deg,${a(hC,.2)},rgba(255,255,255,.55),${a(hC,.2)});border:1px solid rgba(255,255,255,.8);box-shadow:0 0 ${Math.round(10*s)}px ${a(hC,.9)},0 0 ${Math.round(4*s)}px rgba(255,255,255,.9),inset 0 1px 0 rgba(255,255,255,.4)"></div>
+<div style="position:absolute;top:${Math.round(55*s)}px;left:50%;transform:translateX(-50%);width:${Math.round(30*s)}px;height:${Math.round(2*s)}px;background:linear-gradient(90deg,transparent,${a(bC,.9)},transparent)"></div>
+<div style="position:absolute;top:${Math.round(72*s)}px;left:15%;right:15%;height:${Math.round(3*s)}px;background:linear-gradient(90deg,transparent,${a(bC,.6)},${a(bC,.6)},transparent);border-radius:2px"></div>
+<div style="position:absolute;top:${Math.round(87*s)}px;bottom:0;left:calc(50% - 1px);width:1px;background:linear-gradient(180deg,${a(lC,.5)},transparent)"></div>
 <div class="thumb-scan"></div>`;
 }
 
