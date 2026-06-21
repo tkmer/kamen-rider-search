@@ -35,13 +35,11 @@ body{background:var(--bg);color:var(--text);font-family:'Helvetica Neue',Arial,'
 .clear-btn:hover{border-color:var(--text2)}
 
 /* FILTER CHIPS */
-.filter-bar{max-width:1200px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.era-chip{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text2);font-size:12px;cursor:pointer;transition:all .15s}
-.era-chip.all.active{border-color:var(--text);color:var(--text);background:var(--bg3)}
-.era-chip.showa.active{border-color:var(--showa);color:var(--showa);background:var(--showa-bg)}
-.era-chip.heisei.active{border-color:var(--heisei);color:var(--heisei);background:var(--heisei-bg)}
-.era-chip.reiwa.active{border-color:var(--reiwa);color:var(--reiwa);background:var(--reiwa-bg)}
-.filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.filter-bar{max-width:1200px;margin:0 auto;padding:10px 20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filter-select{padding:5px 28px 5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-size:12px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color .15s}
+.filter-select:hover,.filter-select:focus{border-color:var(--accent2);outline:none;color:var(--text)}
+.filter-label{font-size:11px;color:var(--text3);margin-right:2px}
+.filter-sep{width:1px;height:20px;background:var(--border);margin:0 2px}
 .stats-label{font-size:12px;color:var(--text3);margin-left:auto}
 
 /* FUZZY HINT */
@@ -114,10 +112,20 @@ mark{background:var(--hl);color:var(--hl-text);border-radius:2px;padding:0 2px}
 </header>
 
 <div class="filter-bar">
-  <button class="era-chip all active" id="chip-all" onclick="setEra('all')">すべて</button>
-  <button class="era-chip showa" id="chip-昭和" onclick="setEra('昭和')">昭和</button>
-  <button class="era-chip heisei" id="chip-平成" onclick="setEra('平成')">平成</button>
-  <button class="era-chip reiwa" id="chip-令和" onclick="setEra('令和')">令和</button>
+  <span class="filter-label">元号</span>
+  <select class="filter-select" id="sel-era" onchange="onFilterChange()">
+    <option value="all">すべて</option>
+    <option value="昭和">昭和</option>
+    <option value="平成">平成</option>
+    <option value="令和">令和</option>
+  </select>
+  <div class="filter-sep"></div>
+  <span class="filter-label">性別</span>
+  <select class="filter-select" id="sel-gender" onchange="onFilterChange()">
+    <option value="all">すべて</option>
+    <option value="男性">男性</option>
+    <option value="女性">女性</option>
+  </select>
   <div class="filter-sep"></div>
   <span class="stats-label" id="stats"></span>
 </div>
@@ -729,7 +737,7 @@ const DB = [
     tags:'お菓子 菓子 スイーツ 甘い ゴチゾウ 赤 黒 白 グラニュート 眷属'
   },
   {
-    id:64, emoji:'🐆', name:'仮面ライダーバルキリー', rider:'刃唯阿', series:'仮面ライダーゼロワン', era:'令和', year:2019,
+    id:64, emoji:'🐆', name:'仮面ライダーバルキリー', rider:'刃唯阿', series:'仮面ライダーゼロワン', era:'令和', year:2019, gender:'女性',
     motif:'チーター・スピード', colors:'黄・黒・白',
     catchphrase:'変身！',
     song:'REAL×EYEZ',
@@ -899,7 +907,7 @@ const DB = [
   },
   // ── 鎧武 サブライダー ──
   {
-    id:84, emoji:'🍇', name:'仮面ライダー龍玄', rider:'湊耀子', series:'仮面ライダー鎧武/ガイム', era:'平成', year:2013,
+    id:84, emoji:'🍇', name:'仮面ライダー龍玄', rider:'湊耀子', series:'仮面ライダー鎧武/ガイム', era:'平成', year:2013, gender:'女性',
     motif:'戦国・ブドウ', colors:'紫・金',
     catchphrase:'変身！',
     song:'Ranbu Escalation',
@@ -967,7 +975,7 @@ const DB = [
   },
   // ── ギーツ サブライダー ──
   {
-    id:92, emoji:'🐱', name:'仮面ライダーナーゴ', rider:'鞍馬祢音', series:'仮面ライダーギーツ', era:'令和', year:2022,
+    id:92, emoji:'🐱', name:'仮面ライダーナーゴ', rider:'鞍馬祢音', series:'仮面ライダーギーツ', era:'令和', year:2022, gender:'女性',
     motif:'ネコ', colors:'ピンク・白',
     catchphrase:'変身！',
     song:'DESIRE GRAND PRIX',
@@ -976,7 +984,7 @@ const DB = [
   },
   // ── ガッチャード サブライダー ──
   {
-    id:93, emoji:'🧙', name:'仮面ライダーマジェード', rider:'九堂りんね', series:'仮面ライダーガッチャード', era:'令和', year:2023,
+    id:93, emoji:'🧙', name:'仮面ライダーマジェード', rider:'九堂りんね', series:'仮面ライダーガッチャード', era:'令和', year:2023, gender:'女性',
     motif:'錬金術・魔女', colors:'紫・黒・金',
     catchphrase:'変身！',
     song:'GATCHARD',
@@ -1079,7 +1087,7 @@ const DB = [
     tags:'鷹 タカ 赤 黒 アンデッド ブレイド'
   },
   {
-    id:105, emoji:'♣️', name:'仮面ライダーラルク', rider:'広瀬栞', series:'仮面ライダーブレイド', era:'平成', year:2004,
+    id:105, emoji:'♣️', name:'仮面ライダーラルク', rider:'広瀬栞', series:'仮面ライダーブレイド', era:'平成', year:2004, gender:'女性',
     motif:'チェンジカメレオン', colors:'緑・黒',
     catchphrase:'変身！',
     song:'rebirth',
@@ -1166,7 +1174,7 @@ const DB = [
   },
   // ── フォーゼ サブライダー ──
   {
-    id:116, emoji:'🌸', name:'仮面ライダーなでしこ', rider:'姫島朱美', series:'仮面ライダーフォーゼ', era:'平成', year:2011,
+    id:116, emoji:'🌸', name:'仮面ライダーなでしこ', rider:'姫島朱美', series:'仮面ライダーフォーゼ', era:'平成', year:2011, gender:'女性',
     motif:'宇宙・花', colors:'ピンク・白',
     catchphrase:'変身！',
     song:'Switch On!',
@@ -1226,7 +1234,7 @@ const DB = [
     tags:'時間 時計 黒 金 最強 魔王 未来 2068年 ジオウ 仮面ライダー史'
   },
   {
-    id:124, emoji:'📜', name:'仮面ライダーツクヨミ', rider:'ツクヨミ', series:'仮面ライダージオウ', era:'平成', year:2018,
+    id:124, emoji:'📜', name:'仮面ライダーツクヨミ', rider:'ツクヨミ', series:'仮面ライダージオウ', era:'平成', year:2018, gender:'女性',
     motif:'月・時間', colors:'白・青',
     catchphrase:'変身！',
     song:'ORA ORA ORA',
@@ -1301,7 +1309,7 @@ const DB = [
   },
   // ── リバイス サブライダー ──
   {
-    id:133, emoji:'🦎', name:'仮面ライダージャンヌ', rider:'五十嵐さくら', series:'仮面ライダーリバイス', era:'令和', year:2021,
+    id:133, emoji:'🦎', name:'仮面ライダージャンヌ', rider:'五十嵐さくら', series:'仮面ライダーリバイス', era:'令和', year:2021, gender:'女性',
     motif:'カメレオン・女騎士', colors:'赤・白',
     catchphrase:'変身！',
     song:'Versus V',
@@ -1309,7 +1317,7 @@ const DB = [
     tags:'カメレオン 赤 白 女性 武道 格闘 リバイス デッドマンズ'
   },
   {
-    id:134, emoji:'🐞', name:'仮面ライダーアギレラ', rider:'夏木花（アギレラ）', series:'仮面ライダーリバイス', era:'令和', year:2021,
+    id:134, emoji:'🐞', name:'仮面ライダーアギレラ', rider:'夏木花（アギレラ）', series:'仮面ライダーリバイス', era:'令和', year:2021, gender:'女性',
     motif:'テントウムシ・女王', colors:'赤・黒・白',
     catchphrase:'変身！',
     song:'Versus V',
@@ -1429,7 +1437,7 @@ const DB = [
   },
   // ── ゴースト 追加サブライダー ──
   {
-    id:151, emoji:'🌸', name:'仮面ライダーカノンスペクター', rider:'深海カノン', series:'仮面ライダーゴースト', era:'平成', year:2015,
+    id:151, emoji:'🌸', name:'仮面ライダーカノンスペクター', rider:'深海カノン', series:'仮面ライダーゴースト', era:'平成', year:2015, gender:'女性',
     motif:'ゴースト・桜', colors:'ピンク・白',
     catchphrase:'変身！',
     song:'ALMIGHTY -kamen no chikai-',
@@ -1446,7 +1454,7 @@ const DB = [
   },
   // ── エグゼイド 追加サブライダー ──
   {
-    id:153, emoji:'🎀', name:'仮面ライダーポッピー', rider:'ポッピーピポパポ（バグスター）', series:'仮面ライダーエグゼイド', era:'平成', year:2016,
+    id:153, emoji:'🎀', name:'仮面ライダーポッピー', rider:'ポッピーピポパポ（バグスター）', series:'仮面ライダーエグゼイド', era:'平成', year:2016, gender:'女性',
     motif:'ゲーム・音楽・アイドル', colors:'ピンク・水色',
     catchphrase:'変身！トキメキクライシス！',
     song:'PEOPLE GAME',
@@ -1620,6 +1628,7 @@ let fuse = new Fuse(DB, FUSE_OPTS);
 
 // ─── State ──────────────────────────────────────────────────
 let activeEra = 'all';
+let activeGender = 'all';
 let selectedId = null;
 let expandedTerms = [];
 
@@ -1648,10 +1657,9 @@ function clearSearch(){
   onSearch();
 }
 
-function setEra(e){
-  activeEra = e;
-  document.querySelectorAll('.era-chip').forEach(c => c.classList.remove('active'));
-  document.getElementById('chip-' + (e==='all'?'all':e)).classList.add('active');
+function onFilterChange(){
+  activeEra    = document.getElementById('sel-era').value;
+  activeGender = document.getElementById('sel-gender').value;
   renderGrid();
 }
 
@@ -1673,6 +1681,9 @@ function getResults(){
 
   if(activeEra !== 'all'){
     results = results.filter(r => r.item.era === activeEra);
+  }
+  if(activeGender !== 'all'){
+    results = results.filter(r => (r.item.gender || '男性') === activeGender);
   }
   return results;
 }
