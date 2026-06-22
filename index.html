@@ -2028,6 +2028,7 @@ let _jaVoice = null;
 function _loadVoices(){
   const all = window.speechSynthesis.getVoices();
   _jaVoice = all.find(v=>v.lang==='ja-JP') || all.find(v=>v.lang.startsWith('ja')) || null;
+  console.log('[MASKED ARCHIVE] voices loaded:', all.length, '/ ja:', _jaVoice?.name);
 }
 if(window.speechSynthesis){
   _loadVoices();
@@ -2037,15 +2038,22 @@ if(window.speechSynthesis){
 function speakRider(r){
   try{
     const ss = window.speechSynthesis;
-    if(!ss) return;
+    if(!ss){ console.warn('no speechSynthesis'); return; }
     ss.cancel();
-    const utt = new SpeechSynthesisUtterance('仮面ライダー' + r.name);
+    // Chrome バグ対策: paused状態をリセット
+    ss.resume();
+    const text = '仮面ライダー' + r.name;
+    console.log('[MASKED ARCHIVE] speaking:', text, '/ voice:', _jaVoice?.name);
+    const utt = new SpeechSynthesisUtterance(text);
     utt.lang = 'ja-JP';
     utt.rate = 0.85;
     utt.pitch = 0.65;
     utt.volume = 1.0;
+    if(_jaVoice) utt.voice = _jaVoice;
+    utt.onerror = e => console.error('[MASKED ARCHIVE] speech error:', e.error);
+    utt.onstart = () => console.log('[MASKED ARCHIVE] speech started');
     ss.speak(utt);
-  }catch(e){ console.error('speech error:', e); }
+  }catch(e){ console.error('speech exception:', e); }
 }
 
 function selectRider(id){
