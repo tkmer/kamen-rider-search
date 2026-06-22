@@ -2042,7 +2042,7 @@ function speakRider(r){
     ss.cancel();
     // Chrome バグ対策: paused状態をリセット
     ss.resume();
-    const text = '仮面ライダー' + r.name;
+    const text = r.name.includes('仮面ライダー') ? r.name : '仮面ライダー' + r.name;
     console.log('[MASKED ARCHIVE] speaking:', text, '/ voice:', _jaVoice?.name);
     const utt = new SpeechSynthesisUtterance(text);
     utt.lang = 'ja-JP';
