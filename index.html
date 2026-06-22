@@ -1951,66 +1951,76 @@ function playHenshinSound(){
     const ctx = new (window.AudioContext||window.webkitAudioContext)();
     const t = ctx.currentTime;
 
-    // --- CLICK: ベルト押下のメタリック打撃音 ---
-    const clickBuf = ctx.createBuffer(1, ctx.sampleRate*0.04, ctx.sampleRate);
-    const cd = clickBuf.getChannelData(0);
-    for(let i=0;i<cd.length;i++) cd[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.008));
-    const click = ctx.createBufferSource(); click.buffer = clickBuf;
-    const clickFilt = ctx.createBiquadFilter(); clickFilt.type='highpass'; clickFilt.frequency.value=1200;
-    const clickGain = ctx.createGain(); clickGain.gain.setValueAtTime(0.7,t);
-    click.connect(clickFilt); clickFilt.connect(clickGain); clickGain.connect(ctx.destination);
-    click.start(t);
+    // ノイズバッファ生成ユーティリティ
+    function mkNoise(dur, decay){
+      const b=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);
+      const d=b.getChannelData(0);
+      for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*decay));
+      const s=ctx.createBufferSource(); s.buffer=b; return s;
+    }
 
-    // --- BODY: 低音から中音へのパワーウェーブ ---
-    const body = ctx.createOscillator();
-    body.type = 'sawtooth';
-    body.frequency.setValueAtTime(55, t+0.01);
-    body.frequency.exponentialRampToValueAtTime(220, t+0.12);
-    body.frequency.exponentialRampToValueAtTime(110, t+0.22);
-    const bodyDist = ctx.createWaveShaper();
-    const curve = new Float32Array(256);
-    for(let i=0;i<256;i++){const x=i*2/256-1; curve[i]=x<0?-Math.pow(-x,0.6):Math.pow(x,0.6);}
-    bodyDist.curve = curve;
-    const bodyFilt = ctx.createBiquadFilter(); bodyFilt.type='lowpass';
-    bodyFilt.frequency.setValueAtTime(600,t+0.01);
-    bodyFilt.frequency.exponentialRampToValueAtTime(2400,t+0.18);
-    bodyFilt.Q.value=4;
-    const bodyGain = ctx.createGain();
-    bodyGain.gain.setValueAtTime(0.001,t+0.01);
-    bodyGain.gain.exponentialRampToValueAtTime(0.55,t+0.04);
-    bodyGain.gain.setValueAtTime(0.55,t+0.14);
-    bodyGain.gain.exponentialRampToValueAtTime(0.001,t+0.28);
-    body.connect(bodyDist); bodyDist.connect(bodyFilt); bodyFilt.connect(bodyGain); bodyGain.connect(ctx.destination);
-    body.start(t+0.01); body.stop(t+0.32);
+    // ── 1発目メモリ挿入（左：低め）t+0.00 ──
+    const m1n = mkNoise(0.05, 0.006);
+    const m1f = ctx.createBiquadFilter(); m1f.type='bandpass'; m1f.frequency.value=900; m1f.Q.value=3;
+    const m1g = ctx.createGain(); m1g.gain.setValueAtTime(1.1,t); m1g.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+    m1n.connect(m1f); m1f.connect(m1g); m1g.connect(ctx.destination);
+    m1n.start(t);
 
-    // --- SWEEP: 電子音の急上昇 ---
-    const sw = ctx.createOscillator(); sw.type='square';
-    sw.frequency.setValueAtTime(180,t+0.10);
-    sw.frequency.exponentialRampToValueAtTime(3200,t+0.38);
-    const swFilt = ctx.createBiquadFilter(); swFilt.type='bandpass';
-    swFilt.frequency.setValueAtTime(500,t+0.10);
-    swFilt.frequency.exponentialRampToValueAtTime(5000,t+0.38);
-    swFilt.Q.value=2;
-    const swGain = ctx.createGain();
-    swGain.gain.setValueAtTime(0.001,t+0.10);
-    swGain.gain.exponentialRampToValueAtTime(0.30,t+0.16);
-    swGain.gain.setValueAtTime(0.30,t+0.30);
-    swGain.gain.exponentialRampToValueAtTime(0.001,t+0.44);
-    sw.connect(swFilt); swFilt.connect(swGain); swGain.connect(ctx.destination);
-    sw.start(t+0.10); sw.stop(t+0.48);
+    const m1o = ctx.createOscillator(); m1o.type='square'; m1o.frequency.value=320;
+    const m1og = ctx.createGain();
+    m1og.gain.setValueAtTime(0.001,t); m1og.gain.exponentialRampToValueAtTime(0.35,t+0.008);
+    m1og.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+    m1o.connect(m1og); m1og.connect(ctx.destination);
+    m1o.start(t); m1o.stop(t+0.08);
 
-    // --- SHINE: 変身完了の金属音 ---
-    const shine = ctx.createOscillator(); shine.type='sine';
-    shine.frequency.setValueAtTime(3400,t+0.36);
-    shine.frequency.exponentialRampToValueAtTime(5200,t+0.55);
-    const shineGain = ctx.createGain();
-    shineGain.gain.setValueAtTime(0.001,t+0.36);
-    shineGain.gain.exponentialRampToValueAtTime(0.28,t+0.39);
-    shineGain.gain.exponentialRampToValueAtTime(0.001,t+0.60);
-    shine.connect(shineGain); shineGain.connect(ctx.destination);
-    shine.start(t+0.36); shine.stop(t+0.65);
+    // ── 2発目メモリ挿入（右：高め）t+0.16 ──
+    const m2n = mkNoise(0.05, 0.006);
+    const m2f = ctx.createBiquadFilter(); m2f.type='bandpass'; m2f.frequency.value=1400; m2f.Q.value=3;
+    const m2g = ctx.createGain(); m2g.gain.setValueAtTime(1.1,t+0.16); m2g.gain.exponentialRampToValueAtTime(0.001,t+0.21);
+    m2n.connect(m2f); m2f.connect(m2g); m2g.connect(ctx.destination);
+    m2n.start(t+0.16);
 
-    setTimeout(()=>ctx.close(), 900);
+    const m2o = ctx.createOscillator(); m2o.type='square'; m2o.frequency.value=560;
+    const m2og = ctx.createGain();
+    m2og.gain.setValueAtTime(0.001,t+0.16); m2og.gain.exponentialRampToValueAtTime(0.35,t+0.168);
+    m2og.gain.exponentialRampToValueAtTime(0.001,t+0.23);
+    m2o.connect(m2og); m2og.connect(ctx.destination);
+    m2o.start(t+0.16); m2o.stop(t+0.24);
+
+    // ── 中間の電子アナウンス風フラッシュ（W特有の「ピロリン」）t+0.32 ──
+    [0, 0.07].forEach((dt,i)=>{
+      const o=ctx.createOscillator(); o.type='sine';
+      o.frequency.value = i===0 ? 880 : 1320;
+      const g=ctx.createGain();
+      g.gain.setValueAtTime(0.001,t+0.32+dt);
+      g.gain.exponentialRampToValueAtTime(0.38,t+0.32+dt+0.012);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.32+dt+0.06);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t+0.32+dt); o.stop(t+0.32+dt+0.07);
+    });
+
+    // ── パワーライズ：低音うねりが一気に解放 t+0.50 ──
+    const pw=ctx.createOscillator(); pw.type='sawtooth';
+    pw.frequency.setValueAtTime(80,t+0.50);
+    pw.frequency.exponentialRampToValueAtTime(640,t+0.80);
+    const pwf=ctx.createBiquadFilter(); pwf.type='lowpass';
+    pwf.frequency.setValueAtTime(300,t+0.50); pwf.frequency.exponentialRampToValueAtTime(4000,t+0.80); pwf.Q.value=5;
+    const pwg=ctx.createGain();
+    pwg.gain.setValueAtTime(0.001,t+0.50); pwg.gain.exponentialRampToValueAtTime(0.50,t+0.54);
+    pwg.gain.setValueAtTime(0.50,t+0.72); pwg.gain.exponentialRampToValueAtTime(0.001,t+0.92);
+    pw.connect(pwf); pwf.connect(pwg); pwg.connect(ctx.destination);
+    pw.start(t+0.50); pw.stop(t+0.96);
+
+    // ── フィニッシュ：キーンと抜ける高音 t+0.82 ──
+    const fi=ctx.createOscillator(); fi.type='sine';
+    fi.frequency.setValueAtTime(2800,t+0.82); fi.frequency.exponentialRampToValueAtTime(4400,t+1.10);
+    const fig=ctx.createGain();
+    fig.gain.setValueAtTime(0.001,t+0.82); fig.gain.exponentialRampToValueAtTime(0.22,t+0.86);
+    fig.gain.exponentialRampToValueAtTime(0.001,t+1.15);
+    fi.connect(fig); fig.connect(ctx.destination);
+    fi.start(t+0.82); fi.stop(t+1.20);
+
+    setTimeout(()=>ctx.close(), 1400);
   }catch(e){}
 }
 
