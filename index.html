@@ -1946,8 +1946,83 @@ function renderGrid(){
     </div>`).join('');
 }
 
+function playHenshinSound(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const now = ctx.currentTime;
+
+    // --- ノイズバースト（起動感）---
+    const bufLen = ctx.sampleRate * 0.06;
+    const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0;i<bufLen;i++) data[i]=(Math.random()*2-1)*(1-i/bufLen);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.18, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now+0.06);
+    const noiseFilt = ctx.createBiquadFilter();
+    noiseFilt.type = 'bandpass';
+    noiseFilt.frequency.value = 3000;
+    noiseFilt.Q.value = 1.5;
+    noise.connect(noiseFilt);
+    noiseFilt.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start(now);
+
+    // --- 上昇トーン ---
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc2.type = 'square';
+    osc1.frequency.setValueAtTime(120, now);
+    osc1.frequency.exponentialRampToValueAtTime(900, now+0.22);
+    osc2.frequency.setValueAtTime(240, now);
+    osc2.frequency.exponentialRampToValueAtTime(1800, now+0.22);
+
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.setValueAtTime(400, now);
+    filt.frequency.exponentialRampToValueAtTime(4000, now+0.22);
+    filt.Q.value = 6;
+
+    const mainGain = ctx.createGain();
+    mainGain.gain.setValueAtTime(0.001, now);
+    mainGain.gain.exponentialRampToValueAtTime(0.28, now+0.03);
+    mainGain.gain.setValueAtTime(0.28, now+0.18);
+    mainGain.gain.exponentialRampToValueAtTime(0.001, now+0.32);
+
+    const osc2Gain = ctx.createGain();
+    osc2Gain.gain.value = 0.25;
+
+    osc1.connect(filt);
+    osc2.connect(osc2Gain);
+    osc2Gain.connect(filt);
+    filt.connect(mainGain);
+    mainGain.connect(ctx.destination);
+
+    // --- 短いピーン音 ---
+    const ping = ctx.createOscillator();
+    const pingGain = ctx.createGain();
+    ping.type = 'sine';
+    ping.frequency.setValueAtTime(1800, now+0.20);
+    ping.frequency.exponentialRampToValueAtTime(2800, now+0.38);
+    pingGain.gain.setValueAtTime(0.001, now+0.20);
+    pingGain.gain.exponentialRampToValueAtTime(0.22, now+0.23);
+    pingGain.gain.exponentialRampToValueAtTime(0.001, now+0.45);
+    ping.connect(pingGain);
+    pingGain.connect(ctx.destination);
+
+    osc1.start(now); osc1.stop(now+0.35);
+    osc2.start(now); osc2.stop(now+0.35);
+    ping.start(now+0.20); ping.stop(now+0.50);
+    setTimeout(()=>ctx.close(), 600);
+  }catch(e){}
+}
+
 function selectRider(id){
   selectedId = id;
+  playHenshinSound();
   renderGrid();
   renderPanel();
 }
