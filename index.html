@@ -2024,24 +2024,29 @@ function playHenshinSound(){
   }catch(e){}
 }
 
+let _jaVoice = null;
+function _loadVoices(){
+  const all = window.speechSynthesis.getVoices();
+  _jaVoice = all.find(v=>v.lang==='ja-JP') || all.find(v=>v.lang.startsWith('ja')) || null;
+}
+if(window.speechSynthesis){
+  _loadVoices();
+  window.speechSynthesis.onvoiceschanged = _loadVoices;
+}
+
 function speakRider(r){
   try{
     if(!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-    // ベルト音の後にアナウンス
     setTimeout(()=>{
-      const text = 'ライダー：' + r.name;
-      const utt = new SpeechSynthesisUtterance(text);
+      const utt = new SpeechSynthesisUtterance('仮面ライダー' + r.name);
       utt.lang = 'ja-JP';
-      utt.rate = 0.88;
-      utt.pitch = 0.7;   // 低め＝アナウンサー風
+      utt.rate = 0.82;
+      utt.pitch = 0.65;
       utt.volume = 1.0;
-      // 日本語音声を優先
-      const voices = window.speechSynthesis.getVoices();
-      const jaVoice = voices.find(v=>v.lang.startsWith('ja'));
-      if(jaVoice) utt.voice = jaVoice;
+      if(_jaVoice) utt.voice = _jaVoice;
       window.speechSynthesis.speak(utt);
-    }, 550); // ベルト音のパワーライズ後に喋る
+    }, 520);
   }catch(e){}
 }
 
