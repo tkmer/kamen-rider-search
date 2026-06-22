@@ -2024,9 +2024,32 @@ function playHenshinSound(){
   }catch(e){}
 }
 
+function speakRider(r){
+  try{
+    if(!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    // ベルト音の後にアナウンス
+    setTimeout(()=>{
+      const text = 'ライダー：' + r.name;
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = 'ja-JP';
+      utt.rate = 0.88;
+      utt.pitch = 0.7;   // 低め＝アナウンサー風
+      utt.volume = 1.0;
+      // 日本語音声を優先
+      const voices = window.speechSynthesis.getVoices();
+      const jaVoice = voices.find(v=>v.lang.startsWith('ja'));
+      if(jaVoice) utt.voice = jaVoice;
+      window.speechSynthesis.speak(utt);
+    }, 550); // ベルト音のパワーライズ後に喋る
+  }catch(e){}
+}
+
 function selectRider(id){
   selectedId = id;
+  const r = DB.find(x=>x.id===id);
   playHenshinSound();
+  if(r) speakRider(r);
   renderGrid();
   renderPanel();
 }
