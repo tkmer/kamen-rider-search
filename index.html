@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>仮面ライダー 検索ツール</title>
+<title>MASKED ARCHIVE</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
 <style>
@@ -21,10 +21,17 @@
 body{background:var(--bg);color:var(--text);font-family:'Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN',sans-serif;min-height:100vh}
 
 /* HEADER */
-.site-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 20px;position:sticky;top:0;z-index:100}
+.site-header{background:linear-gradient(180deg,#0d0d14 0%,var(--bg2) 100%);border-bottom:1px solid rgba(200,16,46,.35);padding:14px 20px;position:sticky;top:0;z-index:100}
 .header-inner{max-width:1200px;margin:0 auto}
-.site-title{font-size:20px;font-weight:700;color:var(--text);letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.site-title span{color:var(--accent2)}
+.site-title{font-size:22px;font-weight:900;letter-spacing:2px;margin-bottom:12px;display:flex;align-items:center;gap:12px;text-transform:uppercase}
+.site-title .logo-icon{width:34px;height:34px;border:2px solid var(--accent2);border-radius:6px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(255,51,85,.5),inset 0 0 8px rgba(255,51,85,.15);flex-shrink:0}
+.site-title .logo-icon i{font-size:18px;color:var(--accent2);filter:drop-shadow(0 0 4px rgba(255,51,85,1))}
+.site-title .logo-text{display:flex;flex-direction:column;gap:1px}
+.site-title .logo-main{display:flex;align-items:baseline;gap:8px;line-height:1}
+.site-title .logo-masked{color:var(--accent2);text-shadow:0 0 18px rgba(255,51,85,.7),0 0 40px rgba(255,51,85,.3);letter-spacing:4px}
+.site-title .logo-sep{color:var(--border);font-weight:300;font-size:18px;letter-spacing:0}
+.site-title .logo-archive{color:var(--text);letter-spacing:5px;font-size:18px}
+.site-title .logo-sub{font-size:9px;color:var(--text3);letter-spacing:3px;font-weight:400;text-transform:none}
 .search-wrap{display:flex;gap:8px}
 .search-box{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 14px 0 36px;height:40px;color:var(--text);font-size:14px;position:relative;transition:border-color .15s}
 .search-wrap .si{position:relative;flex:1;display:flex;align-items:center}
@@ -100,7 +107,17 @@ mark{background:var(--hl);color:var(--hl-text);border-radius:2px;padding:0 2px}
 
 <header class="site-header">
   <div class="header-inner">
-    <div class="site-title"><i class="ti ti-shield-half-filled"></i>仮面ライダー<span>検索ツール</span></div>
+    <div class="site-title">
+      <div class="logo-icon"><i class="ti ti-eye-filled"></i></div>
+      <div class="logo-text">
+        <div class="logo-main">
+          <span class="logo-masked">MASKED</span>
+          <span class="logo-sep">/</span>
+          <span class="logo-archive">ARCHIVE</span>
+        </div>
+        <div class="logo-sub">仮面ライダー図鑑</div>
+      </div>
+    </div>
     <div class="search-wrap">
       <div class="si">
         <i class="ti ti-search"></i>
