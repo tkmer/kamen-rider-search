@@ -1658,6 +1658,7 @@ let selectedId = null;
 let expandedTerms = [];
 
 function eraClass(e){ return {昭和:'showa',平成:'heisei',令和:'reiwa'}[e]||'showa'; }
+function sn(name){ return name ? name.replace(/^仮面ライダー/, '') : name; }
 
 function hl(text, q){
   if(!q || !text) return text || '';
@@ -1940,7 +1941,7 @@ function renderGrid(){
         <span class="era-dot ${eraClass(r.era)}">${r.era}</span>
       </div>
       <div class="card-body">
-        <div class="card-name">${hl(r.name, expanded)}</div>
+        <div class="card-name">${hl(sn(r.name), expanded)}</div>
         <div class="card-sub">${r.year}年</div>
       </div>
     </div>`).join('');
@@ -1979,7 +1980,7 @@ function renderPanel(){
   panel.className = 'detail-panel';
   panel.innerHTML = `
     <div class="detail-img">${riderThumbHtml(r,true)}</div>
-    <div class="detail-name">${hl(r.name, expanded)}</div>
+    <div class="detail-name">${hl(sn(r.name), expanded)}</div>
     <div class="detail-meta">${r.series}（${r.year}年）</div>
     <div class="tag-row">
       <span class="era-dot ${eraClass(r.era)}" style="position:static">${r.era}</span>
