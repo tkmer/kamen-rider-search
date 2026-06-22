@@ -2036,18 +2036,16 @@ if(window.speechSynthesis){
 
 function speakRider(r){
   try{
-    if(!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    setTimeout(()=>{
-      const utt = new SpeechSynthesisUtterance('仮面ライダー' + r.name);
-      utt.lang = 'ja-JP';
-      utt.rate = 0.82;
-      utt.pitch = 0.65;
-      utt.volume = 1.0;
-      if(_jaVoice) utt.voice = _jaVoice;
-      window.speechSynthesis.speak(utt);
-    }, 520);
-  }catch(e){}
+    const ss = window.speechSynthesis;
+    if(!ss) return;
+    ss.cancel();
+    const utt = new SpeechSynthesisUtterance('仮面ライダー' + r.name);
+    utt.lang = 'ja-JP';
+    utt.rate = 0.85;
+    utt.pitch = 0.65;
+    utt.volume = 1.0;
+    ss.speak(utt);
+  }catch(e){ console.error('speech error:', e); }
 }
 
 function selectRider(id){
